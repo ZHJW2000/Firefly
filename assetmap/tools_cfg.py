@@ -50,12 +50,19 @@ _BUNDLED = {
 
 
 def apply_bundled(cfg: dict) -> dict:
-    """若存在内置 tools\\ 目录，用其中的工具路径覆盖（仅覆盖实际存在的）。"""
-    b = tools_dir()
-    for key, rel in _BUNDLED.items():
-        p = os.path.join(b, *rel)
-        if os.path.isfile(p) or (key == "ehole_cwd" and os.path.isdir(p)):
-            cfg[key] = p
+    """按顺序探测 tools\\ 目录（exe 同级 → 已知部署位置），
+    用其中实际存在的工具路径覆盖配置。"""
+    candidates = [tools_dir(),
+                  r"E:\Cybersecurity\tools\01-Information-Gathering\AssetRadar\tools"]
+    for b in candidates:
+        found_any = False
+        for key, rel in _BUNDLED.items():
+            p = os.path.join(b, *rel)
+            if os.path.isfile(p) or (key == "ehole_cwd" and os.path.isdir(p)):
+                cfg[key] = p
+                found_any = True
+        if found_any and os.path.isdir(b):
+            return cfg
     return cfg
 
 
