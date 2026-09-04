@@ -110,11 +110,19 @@ class App:
         tgt_wrap = ttk.Frame(frm, style="Card.TFrame")
         tgt_wrap.grid(row=0, column=1, sticky="w", **pad)
         self.txt_targets = tk.Text(tgt_wrap, width=34, height=3, font=("Consolas", 9),
-                                   relief="solid", bd=1, highlightthickness=0)
+                                   relief="solid", bd=1, highlightthickness=0,
+                                   fg="#111111")
         self.txt_targets.pack(side="left")
+        self.txt_targets.tag_config("hint", foreground="#9aa5b1")
+        self._TGT_HINT = "每行一个域名，如：\nexample.com\nxjtu.edu.cn"
+        self.txt_targets.insert("1.0", self._TGT_HINT, "hint")
+        self.txt_targets.bind("<FocusIn>", self._tgt_focus_in)
+        self.txt_targets.bind("<FocusOut>", self._tgt_focus_out)
         self.lbl_tgt_count = ttk.Label(frm, text="0 个目标\n每行一个 · 支持批量",
                                        style="Gray.TLabel", justify="left")
-        self.lbl_tgt_count.grid(row=0, column=2, sticky="w", padx=(8, 12))
+        self.lbl_tgt_count.grid(row=0, column=2, sticky="w", padx=(8, 2))
+        ttk.Button(frm, text="示例", width=5, command=self.on_show_examples)\
+            .grid(row=0, column=3, sticky="w", pady=3)
         self.txt_targets.bind("<KeyRelease>", lambda e: self._update_tgt_count())
 
         ttk.Label(frm, text="Nmap 模式:").grid(row=1, column=0, sticky="e", **pad)
@@ -261,6 +269,48 @@ class App:
                        anchor="w", justify="left").grid(row=row, column=0,
                                                         columnspan=5, sticky="w",
                                                         padx=5, pady=3)
+
+    def _tgt_focus_in(self, e=None):
+        if self.txt_targets.get("1.0", "end").strip() == self._TGT_HINT.strip():
+            self.txt_targets.delete("1.0", "end")
+            self.txt_targets.config(fg="#111111")
+
+    def _tgt_focus_out(self, e=None):
+        if not self.txt_targets.get("1.0", "end").strip():
+            self.txt_targets.insert("1.0", self._TGT_HINT, "hint")
+            self.txt_targets.config(fg="#9aa5b1")
+
+    def on_show_examples(self):
+        messagebox.showinfo(
+            "目标域名填写示例",
+            "填写规则：只填主域名，每行一个，不要带 https:// 和路径\n\n"
+            "✅ 正确示例：\n"
+            "    example.com          （普通网站）\n"
+            "    xjtu.edu.cn          （学校/机构主域）\n"
+            "    www.xjtu.edu.cn      （具体子域也可以）\n\n"
+            "❌ 错误示例：\n"
+            "    https://xjtu.edu.cn  （不要带协议头）\n"
+            "    xjtu.edu.cn/login    （不要带路径）\n"
+            "    192.168.1.1          （内网 IP 无意义）\n\n"
+            "批量：多个目标各占一行，或用「导入列表…」从文件载入\n"
+            "工具会自动收集每个目标域名的子域后再测绘")
+
+    def _update_tgt_count(self):
+        n = len(self._get_targets())
+        self.lbl_tgt_count.config(text=f"{n} 个目标\n每行一个 · 支持批量")
+
+    def _get_targets(self):
+        """读取目标输入框，去重、去空行；占位提示不算目标。"""
+        body = self.txt_targets.get("1.0", "end").strip()
+        if not body or body == self._TGT_HINT.strip():
+            return []
+        seen, out = set(), []
+        for ln in self.txt_targets.get("1.0", "end").splitlines():
+            t = ln.strip().lower().rstrip("/.")
+            if t and t not in seen:
+                seen.add(t)
+                out.append(t)
+        return out
 
     def on_import_list(self):
         """统一导入入口：选择文件后决定导入为测绘目标还是子域列表。"""
