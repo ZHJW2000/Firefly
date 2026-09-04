@@ -1,0 +1,4 @@
+aiohttp>=3.9
+openpyxl>=3.1
+requests>=2.31
+pyinstaller>=6.0

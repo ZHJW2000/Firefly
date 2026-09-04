@@ -1,0 +1,17 @@
+# 打包产物 / 构建缓存
+dist/
+build/
+*.spec
+
+# 运行输出
+output/
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# IDE
+.idea/
+.vscode/
