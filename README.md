@@ -165,7 +165,9 @@ OneForAll 与 Python 3.13 不兼容（`fire`/`exrex` 依赖已移除的标准库
 - [EHole](https://github.com/EdgeSecurityTeam/EHole) — 指纹识别
 - [Katana](https://github.com/projectdiscovery/katana) — 端点爬取
 
-> 本工具基于以上开源组件编排实现，感谢各项目作者的贡献。使用前请一并遵守各组件的开源协议。
+> 本工具基于以上开源组件编排实现，感谢各项目作者的贡献。
+>
+> **第三方组件协议**：各组件协议文本见发行包 `licenses\` 目录（Nmap NPSL、Katana MIT、OneForAll GPL-3.0、Python PSF）。EHole 原仓库未附开源协议，其文件版权归 EdgeSecurityTeam 所有，本包按社区惯例署名捆绑、仅用于非商业的安全测试与学习研究；如权利人认为不妥请联系维护者移除，使用者也可自行下载 EHole 后在「工具路径设置」中指定。
 
 ---
 

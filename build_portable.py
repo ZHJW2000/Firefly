@@ -85,6 +85,15 @@ def main():
         shutil.rmtree(dst, ignore_errors=True)
         copy_tree(src, dst, EXCLUDE.get(name, set()))
 
+    # 附带第三方协议文本
+    lic_src = os.path.join(BASE, "licenses")
+    if os.path.isdir(lic_src):
+        lic_dst = os.path.join(DIST, "licenses")
+        os.makedirs(lic_dst, exist_ok=True)
+        for f in os.listdir(lic_src):
+            shutil.copy2(os.path.join(lic_src, f), os.path.join(lic_dst, f))
+        print(f"已附带协议文本: {len(os.listdir(lic_dst))} 份")
+
     # 验证内置工具可执行
     checks = [
         [py, "-c", "import fire, exrex; print('py-ok')"],
