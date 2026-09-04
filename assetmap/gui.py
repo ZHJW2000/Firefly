@@ -126,8 +126,7 @@ class App:
                                      values=["top1000", "全端口"])
         self.cmb_mode.current(0)
         self.cmb_mode.pack(side="left")
-        ttk.Button(bar1, text="导入目标列表", command=self.on_import_targets).pack(side="left", padx=8)
-        ttk.Button(bar1, text="导入子域列表(替代阶段1)", command=self.on_import).pack(side="left")
+        ttk.Button(bar1, text="导入列表…", command=self.on_import_list).pack(side="left", padx=8)
         ttk.Button(frm, text="工具路径设置", command=self.on_paths).grid(row=1, column=4, sticky="e", **pad)
 
         ttk.Label(frm, text="输出目录:").grid(row=2, column=0, sticky="e", **pad)
@@ -137,14 +136,12 @@ class App:
         ttk.Button(frm, text="浏览…", command=self.on_browse_out).grid(row=2, column=4, sticky="e", **pad)
 
         self.var_auth = tk.BooleanVar(value=False)
-        ttk.Checkbutton(frm, variable=self.var_auth, style="Card.TCheckbutton",
-                        text="我确认已获得授权，可对上述范围内的资产进行数据安全评估",
-                        ).grid(row=3, column=0, columnspan=5, sticky="w", **pad)
+        self._native_check(frm, self.var_auth,
+                           "我确认已获得授权，可对上述范围内的资产进行数据安全评估", 3)
 
         self.var_render = tk.BooleanVar(value=bool(self.cfg.get("headless_render", True)))
-        ttk.Checkbutton(frm, variable=self.var_render, style="Card.TCheckbutton",
-                        text="Edge 无头渲染动态页面（后台执行，捕获运行时注入的 JS）",
-                        ).grid(row=4, column=0, columnspan=5, sticky="w", **pad)
+        self._native_check(frm, self.var_render,
+                           "Edge 无头渲染动态页面（后台执行，捕获运行时注入的 JS）", 4)
 
         # 2. 执行
         frm_run = card(self.root, "2. 执行")
@@ -258,28 +255,40 @@ class App:
             pass
         self.root.after(200, self._poll)
 
-    def on_import_targets(self):
+    def _native_check(self, parent, var, text, row):
+        """系统原生勾选框（Windows 上显示 ✓ 而非 clam 主题的叉）。"""
+        tk.Checkbutton(parent, variable=var, text=text, font=FONT,
+                       bg=C_CARD, fg="#2c3e50", activebackground=C_CARD,
+                       anchor="w", justify="left").grid(row=row, column=0,
+                                                        columnspan=5, sticky="w",
+                                                        padx=5, pady=3)
+
+    def on_import_list(self):
+        """统一导入入口：选择文件后决定导入为测绘目标还是子域列表。"""
         p = filedialog.askopenfilename(filetypes=[("文本/CSV", "*.txt *.csv"), ("所有文件", "*.*")],
-                                       title="选择目标列表（每行一个域名）")
+                                       title="选择列表文件（每行一条）")
         if not p:
             return
         with open(p, "r", encoding="utf-8", errors="replace") as f:
             lines = [ln.strip() for ln in f if ln.strip()]
-        cur = self.txt_targets.get("1.0", "end").strip()
-        merged = (cur + "\n" if cur else "") + "\n".join(lines)
-        self.txt_targets.delete("1.0", "end")
-        self.txt_targets.insert("1.0", merged)
-        self._update_tgt_count()
-        self._log(f"已导入 {len(lines)} 个目标。")
-
-    def on_import(self):
-        p = filedialog.askopenfilename(filetypes=[("文本/CSV", "*.txt *.csv"), ("所有文件", "*.*")])
-        if not p:
+        if not lines:
             return
-        with open(p, "r", encoding="utf-8", errors="replace") as f:
-            subs = [ln.strip().lower() for ln in f if ln.strip()]
-        self.manual_subdomains = subs
-        self._log(f"已导入 {len(subs)} 条子域（将替代阶段1）。")
+        purpose = messagebox.askquestion(
+            "选择导入类型",
+            f"共 {len(lines)} 条记录，请选择导入类型：\n\n"
+            "【是】测绘目标 —— 每行一个待测绘域名，将执行完整六阶段流水线\n"
+            "【否】子域列表 —— 跳过 OneForAll 收集，直接对这些子域执行测绘",
+            icon="question")
+        if purpose == "yes":
+            cur = self.txt_targets.get("1.0", "end").strip()
+            merged = (cur + "\n" if cur else "") + "\n".join(lines)
+            self.txt_targets.delete("1.0", "end")
+            self.txt_targets.insert("1.0", merged)
+            self._update_tgt_count()
+            self._log(f"已导入 {len(lines)} 个测绘目标。")
+        else:
+            self.manual_subdomains = [ln.lower() for ln in lines]
+            self._log(f"已导入 {len(lines)} 条子域（将替代阶段1收集）。")
 
     def on_browse_out(self):
         cur = self.ent_out.get().strip()
