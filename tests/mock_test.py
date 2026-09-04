@@ -4,7 +4,6 @@
 """
 
 import http.server
-import json
 import os
 import sys
 import tempfile
@@ -80,7 +79,7 @@ def test_s4_probe(srv):
     port = srv.server_address[1]
     try:
         rs = probe_urls([f"http://127.0.0.1:{port}/", f"http://127.0.0.1:{port}/404",
-                         f"http://127.0.0.1:1/"], concurrency=10, timeout=5)
+                         "http://127.0.0.1:1/"], concurrency=10, timeout=5)
         assert len(rs) == 2, rs  # 200 与 404 都算存活；死端口不返回
         r = next(x for x in rs if x["status"] == 200)
         assert r["status"] == 200 and r["title"] == "Mock 管理后台" and r["headers"].get("Server")

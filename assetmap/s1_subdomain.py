@@ -29,7 +29,7 @@ def run(ctx, log, progress, should_stop):
             os.remove(csv_path)
         cmd = [py, ctx.cfg["oneforall_py"], "--target", target, "--fmt", "csv",
                "--path", odir, "--show", "True", "run"]
-        log(f"调用 OneForAll（被动收集，未开启爆破）…")
+        log("调用 OneForAll（被动收集，未开启爆破）…")
         try:
             proc = subprocess.run(cmd, capture_output=True, text=True,
                                   timeout=3600, encoding="utf-8", errors="replace",

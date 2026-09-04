@@ -13,7 +13,7 @@ import threading
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 os.chdir(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from assetmap import s3_finger, s5_crawl, s2_portscan
+from assetmap import s2_portscan, s3_finger
 from assetmap.s4_probe import probe_urls
 
 INDEX = "<html><head><title>IntegTest OA</title></head><body><a href='/static/app.js'>app</a></body></html>"
@@ -61,12 +61,12 @@ def main():
 
     # 阶段2：真实 Nmap 扫 127.0.0.1
     gnmap = os.path.join(outdir, "nmap.gnmap")
-    nmap = s3_and_nmap_path = r"E:\Cybersecurity\tools\01-Information-Gathering\Nmap\nmap.exe"
+    nmap = r"E:\Cybersecurity\tools\01-Information-Gathering\Nmap\nmap.exe"
     import subprocess
     print("[2] 运行 Nmap (top1000, 127.0.0.1)…")
     subprocess.run([nmap, "-sT", "-Pn", "-T4", "--open", "-p", "1-10000",
                     "-iL", "-", "-oG", gnmap],
-                   input=f"127.0.0.1\n", text=True, capture_output=True, timeout=600)
+                   input="127.0.0.1\n", text=True, capture_output=True, timeout=600)
     ports_data = s2_portscan._parse_gnmap(gnmap, {"localhost": "127.0.0.1"})
     entry = next((e for e in ports_data if e["ip"] == "127.0.0.1"), None)
     assert entry and port in [p["port"] for p in entry["ports"]], \
@@ -84,10 +84,10 @@ def main():
     cfg = {"ehole_exe": r"E:\Cybersecurity\One-Fox\tools\gui_scan\ehole\EHole_windows_amd64.exe",
            "ehole_cwd": r"E:\Cybersecurity\One-Fox\tools\gui_scan\ehole"}
     print("[4] 运行 EHole…")
-    import json, subprocess as sp
+    import subprocess as sp
     urls_file, out_file = os.path.join(outdir, "u.txt"), os.path.join(outdir, "e.json")
     open(urls_file, "w").write("\n".join(live))
-    r = sp.run([cfg["ehole_exe"], "finger", "-l", os.path.abspath(urls_file), "-o", os.path.abspath(out_file)],
+    sp.run([cfg["ehole_exe"], "finger", "-l", os.path.abspath(urls_file), "-o", os.path.abspath(out_file)],
                cwd=cfg["ehole_cwd"], capture_output=True, text=True, timeout=600,
                encoding="utf-8", errors="replace")
     fps = s3_finger._parse_ehole(out_file, print)
@@ -98,7 +98,7 @@ def main():
     katana = r"E:\Cybersecurity\tools\01-Information-Gathering\katana\katana.exe"
     lst, ep = os.path.join(outdir, "k.txt"), os.path.join(outdir, "k_out.txt")
     open(lst, "w").write(f"http://127.0.0.1:{port}\n")
-    r = sp.run([katana, "-list", os.path.abspath(lst), "-d", "1", "-silent", "-o", os.path.abspath(ep)],
+    sp.run([katana, "-list", os.path.abspath(lst), "-d", "1", "-silent", "-o", os.path.abspath(ep)],
                capture_output=True, text=True, timeout=600, encoding="utf-8", errors="replace")
     endpoints = [ln.strip() for ln in open(ep, encoding="utf-8", errors="replace") if ln.strip()] if os.path.isfile(ep) else []
     print(f"[5] Katana 端点 {len(endpoints)} 个: {endpoints[:3]}")

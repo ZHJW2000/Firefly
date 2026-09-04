@@ -1,6 +1,5 @@
 """tkinter GUI：目标输入 → 六阶段进度 → 结果预览 → 导出。"""
 
-import json
 import os
 import queue
 import subprocess

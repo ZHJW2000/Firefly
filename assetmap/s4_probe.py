@@ -6,7 +6,6 @@
 
 import asyncio
 import re
-import ssl
 from typing import Callable, List, Optional
 
 import aiohttp

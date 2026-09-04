@@ -5,7 +5,7 @@ import os
 import threading
 import time
 from dataclasses import dataclass, field
-from typing import Callable, Dict, List, Optional
+from typing import Callable, Optional
 
 from . import s1_subdomain, s2_portscan, s3_finger, s4_probe, s5_crawl, s6_report
 

@@ -11,8 +11,6 @@ import socket
 import subprocess
 from concurrent.futures import ThreadPoolExecutor
 
-WEB_PORTS_HINT = {80, 443, 8080, 8443, 8000, 8008, 8081, 8888, 9090, 7001, 7002, 4848}
-
 _GNMAP_PORT = re.compile(r"(\d+)/open/tcp//([^/]*)/")
 
 
@@ -71,8 +69,6 @@ def _resolve_all(subs, progress):
     done = 0
     with ThreadPoolExecutor(max_workers=50) as pool:
         futs = {pool.submit(_resolve_one, s): s for s in subs}
-        for fut in futs:
-            pass
         for fut, host in futs.items():
             ip = fut.result()
             dns[host] = ip

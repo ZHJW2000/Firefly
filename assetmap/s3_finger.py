@@ -7,7 +7,6 @@ EHole 指纹识别（框架/中间件/版本），解析其 JSON 输出。
 import json
 import os
 import subprocess
-from urllib.parse import urlparse
 
 from .s4_probe import probe_urls
 

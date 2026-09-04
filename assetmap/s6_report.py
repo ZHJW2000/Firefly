@@ -3,7 +3,7 @@
 import os
 
 from openpyxl import Workbook
-from openpyxl.styles import Alignment, Font, PatternFill
+from openpyxl.styles import Font, PatternFill
 from openpyxl.utils import get_column_letter
 
 from .risk import score_service
@@ -11,18 +11,15 @@ from .risk import score_service
 
 def run(ctx, log, progress, should_stop):
     data = ctx.data
-    dns = data.get("dns") or {}
     ports_data = data.get("ports") or []
     probes = {p["url"]: p for p in (data.get("probes") or [])}
     fps = {f["url"]: f for f in (data.get("fingerprints") or [])}
     endpoints = data.get("endpoints") or []
     sensitive = data.get("sensitive") or []
 
-    # 端点/敏感数据按来源 host 归类
+    # 敏感数据按来源 host 归类
     from urllib.parse import urlparse
-    ep_by_origin, sens_by_origin = {}, {}
-    for u in endpoints:
-        ep_by_origin.setdefault(urlparse(u).netloc, []).append(u)
+    sens_by_origin = {}
     for s in sensitive:
         sens_by_origin.setdefault(urlparse(s["url"]).netloc, []).append(s)
 
