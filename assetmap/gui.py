@@ -44,6 +44,7 @@ class App:
         self.ent_out = ttk.Entry(frm, width=60)
         self.ent_out.insert(0, os.path.join(os.getcwd(), "output"))
         self.ent_out.grid(row=1, column=1, columnspan=4, sticky="w", **pad)
+        ttk.Button(frm, text="浏览…", command=self.on_browse_out).grid(row=1, column=5, **pad)
 
         self.var_auth = tk.BooleanVar(value=False)
         ttk.Checkbutton(
@@ -129,22 +130,48 @@ class App:
         self.manual_subdomains = subs
         self._log(f"已导入 {len(subs)} 条子域（将替代阶段1）。")
 
+    def on_browse_out(self):
+        cur = self.ent_out.get().strip()
+        p = filedialog.askdirectory(initialdir=cur if os.path.isdir(cur) else os.getcwd(),
+                                    title="选择输出目录")
+        if p:
+            self.ent_out.delete(0, "end")
+            self.ent_out.insert(0, os.path.normpath(p))
+
     def on_paths(self):
         dlg = tk.Toplevel(self.root)
         dlg.title("工具路径设置")
         entries = {}
-        keys = [("oneforall_python", "OneForAll Python(venv)"),
-                ("oneforall_py", "oneforall.py"),
-                ("nmap_exe", "nmap.exe"),
-                ("ehole_exe", "EHole.exe"),
-                ("ehole_cwd", "EHole 工作目录"),
-                ("katana_exe", "katana.exe")]
-        for i, (k, label) in enumerate(keys):
-            ttk.Label(dlg, text=label, width=20).grid(row=i, column=0, sticky="w", padx=6, pady=3)
-            e = ttk.Entry(dlg, width=70)
+        # (键, 显示名, 是否目录)
+        keys = [("oneforall_python", "OneForAll Python 运行时", False),
+                ("oneforall_py", "oneforall.py", False),
+                ("nmap_exe", "nmap.exe", False),
+                ("ehole_exe", "EHole.exe", False),
+                ("ehole_cwd", "EHole 工作目录", True),
+                ("katana_exe", "katana.exe", False),
+                ("msedge_exe", "Edge/Chrome 路径(留空自动探测)", False)]
+
+        def browse(entry, is_dir):
+            cur = entry.get().strip()
+            if is_dir:
+                p = filedialog.askdirectory(initialdir=cur if os.path.isdir(cur) else os.getcwd(),
+                                            title="选择文件夹")
+            else:
+                p = filedialog.askopenfilename(
+                    initialdir=os.path.dirname(cur) if os.path.isfile(cur) else os.getcwd(),
+                    title="选择文件")
+            if p:
+                entry.delete(0, "end")
+                entry.insert(0, os.path.normpath(p))
+
+        for i, (k, label, is_dir) in enumerate(keys):
+            ttk.Label(dlg, text=label, width=28).grid(row=i, column=0, sticky="w", padx=6, pady=3)
+            e = ttk.Entry(dlg, width=60)
             e.insert(0, self.cfg.get(k, ""))
             e.grid(row=i, column=1, padx=6, pady=3)
             entries[k] = e
+            ttk.Button(dlg, text="浏览…", command=lambda en=e, d=is_dir: browse(en, d))\
+                .grid(row=i, column=2, padx=6, pady=3)
 
         def do_save():
             for k, e in entries.items():
@@ -152,7 +179,7 @@ class App:
             save(self.cfg)
             self._report_tools()
             dlg.destroy()
-        ttk.Button(dlg, text="保存", command=do_save).grid(row=len(keys), column=1, sticky="e", pady=6)
+        ttk.Button(dlg, text="保存", command=do_save).grid(row=len(keys), column=2, sticky="e", pady=6)
 
     def _report_tools(self):
         checks = check_tools(self.cfg)
