@@ -23,6 +23,8 @@ TOOLS = {
     "katana": r"E:\Cybersecurity\tools\01-Information-Gathering\katana",
     "ehole": r"E:\Cybersecurity\One-Fox\tools\gui_scan\ehole",
     "oneforall": r"E:\Cybersecurity\tools\01-Information-Gathering\OneForAll",
+    # python311 运行时优先取已部署的便携版
+    "python311": r"E:\Cybersecurity\tools\01-Information-Gathering\AssetRadar\tools\python311",
 }
 # 每个工具目录要排除的内容
 EXCLUDE = {
