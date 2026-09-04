@@ -1,7 +1,11 @@
-"""tkinter GUI：目标输入 → 六阶段进度 → 结果预览 → 导出。"""
+"""tkinter 图形界面：目标输入 → 六阶段进度 → 日志 → 报表导出。
+
+视觉：卡片式分区 + 统一配色（无需第三方依赖）。
+"""
 
 import os
 import queue
+import re
 import subprocess
 import threading
 import tkinter as tk
@@ -9,6 +13,66 @@ from tkinter import filedialog, messagebox, ttk
 
 from .pipeline import STAGES, Context, Pipeline, default_outdir
 from .tools_cfg import check_tools, load, save
+
+# ---------- 配色 ----------
+C_BG = "#eef1f6"        # 窗口背景
+C_CARD = "#ffffff"      # 卡片背景
+C_PRIMARY = "#2f6fed"   # 主色（开始按钮/进度条）
+C_DANGER = "#d9534f"    # 停止
+C_OK = "#27ae60"        # 完成
+C_WARN = "#e67e22"      # 运行中
+C_HEADER = "#1f2d3d"    # 顶栏
+C_LOG_BG = "#141a22"    # 日志背景
+C_LOG_FG = "#cfd8e3"    # 日志前景
+
+FONT = ("Microsoft YaHei UI", 9)
+FONT_B = ("Microsoft YaHei UI", 9, "bold")
+FONT_TITLE = ("Microsoft YaHei UI", 15, "bold")
+FONT_SUB = ("Microsoft YaHei UI", 8)
+
+
+def setup_style(root: tk.Tk):
+    style = ttk.Style(root)
+    style.theme_use("clam")
+    root.configure(bg=C_BG)
+    root.option_add("*Font", FONT)
+
+    style.configure("Card.TLabelframe", background=C_CARD, borderwidth=0)
+    style.configure("Card.TLabelframe.Label", background=C_CARD,
+                    font=FONT_B, foreground="#34495e", padding=(2, 4))
+    style.configure("Card.TFrame", background=C_CARD)
+
+    style.configure("TLabel", background=C_CARD, font=FONT)
+    style.configure("Gray.TLabel", foreground="#7f8c8d", font=FONT_SUB)
+    style.configure("TButton", font=FONT, padding=(10, 4))
+    style.map("TButton",
+              background=[("active", "#e8ecf3")],
+              bordercolor=[("!active", "#d0d7e2")])
+    style.configure("Primary.TButton", background=C_PRIMARY, foreground="white", font=FONT_B)
+    style.map("Primary.TButton",
+              background=[("active", "#1f5fd0"), ("disabled", "#9db9e8")],
+              foreground=[("disabled", "#eef2f8")])
+    style.configure("Danger.TButton", background=C_DANGER, foreground="white", font=FONT_B)
+    style.map("Danger.TButton",
+              background=[("active", "#b8433f"), ("disabled", "#e0a9a7")])
+
+    style.configure("Card.TCheckbutton", background=C_CARD)
+    style.map("Card.TCheckbutton", background=[("active", C_CARD)])
+    style.configure("TEntry", padding=3)
+    style.configure("TCombobox", padding=3)
+    style.configure("Stage.Horizontal.TProgressbar", troughcolor="#e4e9f2",
+                    background=C_PRIMARY, borderwidth=0, thickness=8)
+    style.configure("Done.Horizontal.TProgressbar", troughcolor="#e4e9f2",
+                    background=C_OK, borderwidth=0, thickness=8)
+
+
+def card(parent, text):
+    """带标题的白色卡片容器。"""
+    lf = ttk.LabelFrame(parent, text=" " + text + " ", style="Card.TLabelframe")
+    lf.pack(fill="x", padx=10, pady=(8, 4))
+    inner = ttk.Frame(lf, style="Card.TFrame")
+    inner.pack(fill="both", expand=True, padx=8, pady=6)
+    return inner
 
 
 class App:
@@ -20,124 +84,179 @@ class App:
         self.worker = None
         self.ctx = None
         root.title("AssetRadar — 站点资产与敏感信息测绘 v2.0")
-        root.geometry("1020x780")
+        root.geometry("1040x800")
+        root.minsize(900, 700)
+        setup_style(root)
         self._build()
         self._poll()
 
     # ---------- UI ----------
 
     def _build(self):
-        pad = {"padx": 6, "pady": 3}
-        frm = ttk.LabelFrame(self.root, text="1. 目标与配置")
-        frm.pack(fill="x", **pad)
+        pad = {"padx": 5, "pady": 3}
+
+        # 顶栏
+        header = tk.Frame(self.root, bg=C_HEADER, height=54)
+        header.pack(fill="x")
+        header.pack_propagate(False)
+        tk.Label(header, text="🛡  AssetRadar", bg=C_HEADER, fg="white",
+                 font=FONT_TITLE).pack(side="left", padx=16)
+        tk.Label(header, text="站点资产与敏感信息测绘 · 仅限授权评估使用", bg=C_HEADER,
+                 fg="#9fb3c8", font=FONT_SUB).pack(side="left", padx=0, pady=(16, 0))
+        tk.Label(header, text="v2.0", bg=C_HEADER, fg="#5f7a94",
+                 font=FONT_SUB).pack(side="right", padx=16)
+
+        # 1. 目标与配置
+        frm = card(self.root, "1. 目标与配置")
         ttk.Label(frm, text="目标域名:").grid(row=0, column=0, sticky="ne", **pad)
-        self.txt_targets = tk.Text(frm, width=32, height=3, font=("Consolas", 9))
-        self.txt_targets.grid(row=0, column=1, sticky="w", **pad)
-        self.lbl_tgt_count = ttk.Label(frm, text="0 个目标\n（每行一个，支持批量）", foreground="gray", justify="left")
-        self.lbl_tgt_count.grid(row=0, column=1, sticky="e", **pad)
+        tgt_wrap = ttk.Frame(frm, style="Card.TFrame")
+        tgt_wrap.grid(row=0, column=1, sticky="w", **pad)
+        self.txt_targets = tk.Text(tgt_wrap, width=34, height=3, font=("Consolas", 9),
+                                   relief="solid", bd=1, highlightthickness=0)
+        self.txt_targets.pack(side="left")
+        self.lbl_tgt_count = ttk.Label(frm, text="0 个目标\n每行一个 · 支持批量",
+                                       style="Gray.TLabel", justify="left")
+        self.lbl_tgt_count.grid(row=0, column=2, sticky="w", padx=(8, 12))
         self.txt_targets.bind("<KeyRelease>", lambda e: self._update_tgt_count())
+
         ttk.Label(frm, text="Nmap 模式:").grid(row=1, column=0, sticky="e", **pad)
-        self.cmb_mode = ttk.Combobox(frm, width=12, state="readonly",
+        bar1 = ttk.Frame(frm, style="Card.TFrame")
+        bar1.grid(row=1, column=1, columnspan=3, sticky="w", **pad)
+        self.cmb_mode = ttk.Combobox(bar1, width=12, state="readonly",
                                      values=["top1000", "全端口"])
         self.cmb_mode.current(0)
-        self.cmb_mode.grid(row=1, column=1, sticky="w", **pad)
-        ttk.Button(frm, text="导入目标列表", command=self.on_import_targets).grid(row=1, column=2, **pad)
-        ttk.Button(frm, text="导入子域列表(替代阶段1)", command=self.on_import).grid(row=2, column=0, columnspan=2, sticky="w", **pad)
-        ttk.Button(frm, text="工具路径设置", command=self.on_paths).grid(row=1, column=3, **pad)
+        self.cmb_mode.pack(side="left")
+        ttk.Button(bar1, text="导入目标列表", command=self.on_import_targets).pack(side="left", padx=8)
+        ttk.Button(bar1, text="导入子域列表(替代阶段1)", command=self.on_import).pack(side="left")
+        ttk.Button(frm, text="工具路径设置", command=self.on_paths).grid(row=1, column=4, sticky="e", **pad)
+
         ttk.Label(frm, text="输出目录:").grid(row=2, column=0, sticky="e", **pad)
-        self.ent_out = ttk.Entry(frm, width=60)
+        self.ent_out = ttk.Entry(frm, width=62)
         self.ent_out.insert(0, os.path.join(os.getcwd(), "output"))
-        self.ent_out.grid(row=2, column=1, columnspan=4, sticky="w", **pad)
-        ttk.Button(frm, text="浏览…", command=self.on_browse_out).grid(row=2, column=5, **pad)
+        self.ent_out.grid(row=2, column=1, columnspan=3, sticky="w", **pad)
+        ttk.Button(frm, text="浏览…", command=self.on_browse_out).grid(row=2, column=4, sticky="e", **pad)
 
         self.var_auth = tk.BooleanVar(value=False)
-        ttk.Checkbutton(
-            frm, variable=self.var_auth,
-            text="我确认已获得授权，可对上述范围内的资产进行数据安全评估",
-        ).grid(row=3, column=0, columnspan=3, sticky="w", **pad)
+        ttk.Checkbutton(frm, variable=self.var_auth, style="Card.TCheckbutton",
+                        text="我确认已获得授权，可对上述范围内的资产进行数据安全评估",
+                        ).grid(row=3, column=0, columnspan=5, sticky="w", **pad)
 
         self.var_render = tk.BooleanVar(value=bool(self.cfg.get("headless_render", True)))
-        ttk.Checkbutton(
-            frm, variable=self.var_render,
-            text="Edge 无头渲染动态页面（后台执行，捕获运行时注入的 JS）",
-        ).grid(row=3, column=3, columnspan=3, sticky="w", **pad)
+        ttk.Checkbutton(frm, variable=self.var_render, style="Card.TCheckbutton",
+                        text="Edge 无头渲染动态页面（后台执行，捕获运行时注入的 JS）",
+                        ).grid(row=4, column=0, columnspan=5, sticky="w", **pad)
 
-        self.frm_reuse = ttk.LabelFrame(self.root, text="2. 复用上次结果（断点续跑）")
-        self.frm_reuse.pack(fill="x", **pad)
+        # 2. 执行
+        frm_run = card(self.root, "2. 执行")
+        self.btn_start = ttk.Button(frm_run, text="▶  开始测绘", style="Primary.TButton",
+                                    command=self.on_start)
+        self.btn_start.pack(side="left", padx=(2, 6), pady=2)
+        self.btn_stop = ttk.Button(frm_run, text="■  停止", style="Danger.TButton",
+                                   command=self.on_stop, state="disabled")
+        self.btn_stop.pack(side="left", padx=6, pady=2)
+        self.btn_open = ttk.Button(frm_run, text="打开输出目录", command=self.on_open_dir)
+        self.btn_open.pack(side="left", padx=6, pady=2)
+
+        self.frm_reuse = ttk.Frame(frm_run, style="Card.TFrame")
+        self.frm_reuse.pack(side="left", padx=16)
+        ttk.Label(self.frm_reuse, text="复用上次结果:", style="Gray.TLabel").pack(side="left")
         self.reuse_vars = []
-        for i, (name, _) in enumerate(STAGES):
+        for name, _ in STAGES:
             v = tk.BooleanVar(value=False)
-            ttk.Checkbutton(self.frm_reuse, text=name, variable=v).grid(row=0, column=i, **pad)
+            ttk.Checkbutton(self.frm_reuse, text=name.split("-")[-1], variable=v,
+                            style="Card.TCheckbutton").pack(side="left", padx=3)
             self.reuse_vars.append(v)
 
-        frm_run = ttk.LabelFrame(self.root, text="3. 执行")
-        frm_run.pack(fill="x", **pad)
-        self.btn_start = ttk.Button(frm_run, text="开始测绘", command=self.on_start)
-        self.btn_start.pack(side="left", **pad)
-        self.btn_stop = ttk.Button(frm_run, text="停止", command=self.on_stop, state="disabled")
-        self.btn_stop.pack(side="left", **pad)
-        self.btn_open = ttk.Button(frm_run, text="打开输出目录", command=self.on_open_dir)
-        self.btn_open.pack(side="left", **pad)
-
-        frm_prog = ttk.LabelFrame(self.root, text="阶段进度")
-        frm_prog.pack(fill="x", **pad)
+        # 3. 阶段进度（卡片网格）
+        frm_prog = card(self.root, "3. 阶段进度")
         self.stage_status = []
         for i, (name, _) in enumerate(STAGES):
-            ttk.Label(frm_prog, text=name, width=11).grid(row=i // 3 * 2, column=i % 3, sticky="w", **pad)
-            pb = ttk.Progressbar(frm_prog, length=200, mode="determinate")
-            pb.grid(row=i // 3 * 2, column=i % 3, sticky="e", **pad)
-            lbl = ttk.Label(frm_prog, text="待机", foreground="gray", width=22)
-            lbl.grid(row=i // 3 * 2 + 1, column=i % 3, sticky="w", **pad)
-            self.stage_status.append((pb, lbl))
+            r, c = divmod(i, 3)
+            cell = ttk.Frame(frm_prog, style="Card.TFrame")
+            cell.grid(row=r, column=c, sticky="ew", padx=8, pady=4)
+            frm_prog.columnconfigure(c, weight=1)
+            top = ttk.Frame(cell, style="Card.TFrame")
+            top.pack(fill="x")
+            self.dot = tk.Label(top, text="●", fg="#b2bec3", bg=C_CARD, font=FONT_SUB)
+            self.dot.pack(side="left")
+            ttk.Label(top, text=name, font=FONT_B).pack(side="left", padx=4)
+            pb = ttk.Progressbar(top, style="Stage.Horizontal.TProgressbar", length=150,
+                                 mode="determinate")
+            pb.pack(side="right")
+            lbl = ttk.Label(cell, text="待机", style="Gray.TLabel")
+            lbl.pack(fill="x")
+            self.stage_status.append((pb, lbl, self.dot))
 
-        frm_log = ttk.LabelFrame(self.root, text="日志")
-        frm_log.pack(fill="both", expand=True, **pad)
-        self.txt = tk.Text(frm_log, height=12, state="disabled", font=("Consolas", 9))
+        # 4. 日志
+        frm_log = card(self.root, "4. 日志")
+        self.txt = tk.Text(frm_log, height=10, state="disabled", font=("Consolas", 9),
+                           bg=C_LOG_BG, fg=C_LOG_FG, relief="flat", bd=0,
+                           insertbackground=C_LOG_FG)
         self.txt.pack(fill="both", expand=True)
+        self.txt.tag_config("ok", foreground="#7ee787")
+        self.txt.tag_config("err", foreground="#ff7b72")
+        self.txt.tag_config("hi", foreground="#79c0ff")
+
+        # 底部状态栏
+        status = tk.Frame(self.root, bg=C_HEADER, height=24)
+        status.pack(fill="x", side="bottom")
+        status.pack_propagate(False)
+        self.lbl_stat = tk.Label(status, text="就绪 · 输出目录可在下方配置中修改",
+                                 bg=C_HEADER, fg="#9fb3c8", font=FONT_SUB)
+        self.lbl_stat.pack(side="left", padx=10)
 
     # ---------- 交互 ----------
 
     def _log(self, msg):
         self.q.put(("log", msg))
 
+    def _append_log(self, msg):
+        tag = None
+        if re.search(r"失败|异常|错误|error", msg, re.I):
+            tag = "err"
+        elif re.search(r"完成 ✓|已生成|全部通过|退出码 0。|OK", msg):
+            tag = "ok"
+        elif msg.startswith("[阶段"):
+            tag = "hi"
+        self.txt.config(state="normal")
+        self.txt.insert("end", msg + "\n", tag)
+        if self.txt.index("end-1c") != "1.0":
+            self.txt.see("end")
+        self.txt.config(state="disabled")
+
     def _poll(self):
         try:
             while True:
                 kind, *args = self.q.get_nowait()
                 if kind == "log":
-                    self.txt.config(state="normal")
-                    self.txt.insert("end", args[0] + "\n")
-                    self.txt.see("end")
-                    self.txt.config(state="disabled")
+                    self._append_log(args[0])
                 elif kind == "stage":
                     idx, text = args
-                    self.stage_status[idx - 1][1].config(text=text)
+                    pb, lbl, dot = self.stage_status[idx - 1]
+                    lbl.config(text=text)
+                    if "运行中" in text:
+                        dot.config(fg=C_WARN)
+                    elif "完成" in text or "已复用" in text:
+                        dot.config(fg=C_OK)
+                    elif "失败" in text:
+                        dot.config(fg="#e74c3c")
                 elif kind == "progress":
                     idx, done, total = args
                     pb = self.stage_status[idx - 1][0]
                     pb.config(maximum=total or 1, value=done)
+                    if done >= total and total:
+                        pb.config(style="Done.Horizontal.TProgressbar")
+                elif kind == "stat":
+                    self.lbl_stat.config(text=args[0])
                 elif kind == "done":
                     self.btn_start.config(state="normal")
                     self.btn_stop.config(state="disabled")
+                    self.lbl_stat.config(text=f"评估结束 · {args[0] or '未生成报表'}")
                     if args[0]:
                         messagebox.showinfo("完成", f"测绘完成！\n报表: {args[0]}")
         except queue.Empty:
             pass
         self.root.after(200, self._poll)
-
-    def _update_tgt_count(self):
-        n = len(self._get_targets())
-        self.lbl_tgt_count.config(text=f"{n} 个目标\n（每行一个，支持批量）")
-
-    def _get_targets(self):
-        """读取目标输入框，去重、去空行。"""
-        seen, out = set(), []
-        for ln in self.txt_targets.get("1.0", "end").splitlines():
-            t = ln.strip().lower().rstrip("/.")
-            if t and t not in seen:
-                seen.add(t)
-                out.append(t)
-        return out
 
     def on_import_targets(self):
         p = filedialog.askopenfilename(filetypes=[("文本/CSV", "*.txt *.csv"), ("所有文件", "*.*")],
@@ -173,8 +292,8 @@ class App:
     def on_paths(self):
         dlg = tk.Toplevel(self.root)
         dlg.title("工具路径设置")
+        dlg.configure(bg=C_CARD)
         entries = {}
-        # (键, 显示名, 是否目录)
         keys = [("oneforall_python", "OneForAll Python 运行时", False),
                 ("oneforall_py", "oneforall.py", False),
                 ("nmap_exe", "nmap.exe", False),
@@ -211,15 +330,17 @@ class App:
             save(self.cfg)
             self._report_tools()
             dlg.destroy()
-        ttk.Button(dlg, text="保存", command=do_save).grid(row=len(keys), column=2, sticky="e", pady=6)
+        ttk.Button(dlg, text="保存", style="Primary.TButton",
+                   command=do_save).grid(row=len(keys), column=2, sticky="e", pady=6)
 
     def _report_tools(self):
         checks = check_tools(self.cfg)
         missing = [s for s, (ok, _) in checks.items() if not ok and s != "1-子域"]
         for stage, (ok, hint) in checks.items():
             idx = int(stage.split("-")[0])
-            self.stage_status[idx - 1][1].config(
-                text=("就绪" if ok else "缺工具"), foreground=("gray" if ok else "red"))
+            pb, lbl, dot = self.stage_status[idx - 1]
+            lbl.config(text=("就绪" if ok else "缺工具"))
+            dot.config(fg=("#27ae60" if ok else "#e74c3c"))
         if missing:
             self._log(f"注意：以下阶段缺工具，将跳过或降级: {', '.join(missing)}")
 
