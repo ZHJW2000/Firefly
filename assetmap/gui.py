@@ -20,7 +20,7 @@ class App:
         self.stop_event = threading.Event()
         self.worker = None
         self.ctx = None
-        root.title("AssetMapper 资产测绘流水线 v2.0")
+        root.title("AssetRadar — 站点资产与敏感信息测绘 v2.0")
         root.geometry("1020x780")
         self._build()
         self._poll()

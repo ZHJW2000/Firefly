@@ -64,7 +64,7 @@ def run(ctx, log, progress, should_stop):
 def _fetch_js(url):
     try:
         r = requests.get(url, timeout=10, verify=False, stream=True,
-                         headers={"User-Agent": "AssetMapper/2.0"})
+                         headers={"User-Agent": "AssetRadar/2.0"})
         content = r.raw.read(MAX_JS_BYTES + 1, decode_content=True)
         if len(content) <= MAX_JS_BYTES:
             return content.decode("utf-8", errors="replace")

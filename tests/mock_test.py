@@ -1,4 +1,4 @@
-"""AssetMapper mock 自测：不依赖外部安全工具，验证解析器/探测/评分/报表。
+"""AssetRadar mock 自测：不依赖外部安全工具，验证解析器/探测/评分/报表。
 
 运行: python tests/mock_test.py
 """
@@ -151,4 +151,4 @@ if __name__ == "__main__":
     test_s5_scan(base)
     srv.shutdown()
     test_s6_report()
-    print("\n=== AssetMapper 全部 mock 自测通过 ===")
+    print("\n=== AssetRadar 全部 mock 自测通过 ===")

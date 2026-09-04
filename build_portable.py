@@ -1,7 +1,7 @@
-"""组装便携目录版发行包：dist/AssetMapper-portable/
+"""组装便携目录版发行包：dist/AssetRadar-portable/
 
 布局:
-  AssetMapper.exe
+  AssetRadar.exe
   tools/
     nmap/        (去除 zenmap 等)
     katana/
@@ -17,7 +17,7 @@ import shutil
 import subprocess
 
 BASE = os.path.dirname(os.path.abspath(__file__))
-DIST = os.path.join(BASE, "dist", "AssetMapper-portable")
+DIST = os.path.join(BASE, "dist", "AssetRadar-portable")
 TOOLS = {
     "nmap": r"E:\Cybersecurity\tools\01-Information-Gathering\Nmap",
     "katana": r"E:\Cybersecurity\tools\01-Information-Gathering\katana",
@@ -68,7 +68,7 @@ def copy_tree(src, dst, excludes):
 
 
 def main():
-    exe = os.path.join(BASE, "dist", "AssetMapper.exe")
+    exe = os.path.join(BASE, "dist", "AssetRadar.exe")
     assert os.path.isfile(exe), "先运行 pyinstaller 打包 exe（build_exe.bat）"
     os.makedirs(DIST, exist_ok=True)
     shutil.copy2(exe, DIST)

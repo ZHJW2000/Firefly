@@ -1,4 +1,4 @@
-# AssetMapper 资产测绘流水线 v2.0
+# AssetRadar 资产测绘流水线 v2.0
 
 授权范围内资产的自动化测绘工具：输入目标域名，自动完成子域收集 → 端口扫描 → 指纹识别 → Web 探测 → API 端点/敏感数据提取，最终输出按**高危服务优先**排序的 Excel 报表。
 
@@ -15,10 +15,10 @@
 
 ## 外部工具依赖与路径
 
-**便携版（推荐）**：`dist\AssetMapper-portable\` 目录版发行包（约 340MB）已把四个工具全部内置到 `tools\` 子目录：
+**便携版（推荐）**：`dist\AssetRadar-portable\` 目录版发行包（约 340MB）已把四个工具全部内置到 `tools\` 子目录：
 
 ```
-AssetMapper.exe
+AssetRadar.exe
 tools\
 ├── nmap\        (Nmap 主程序及数据文件)
 ├── katana\      (Katana)
@@ -42,7 +42,7 @@ OneForAll 运行时说明：因 OneForAll 与 Python 3.13 不兼容（fire/pipes
 
 ## 使用
 
-1. 双击 `AssetMapper.exe`
+1. 双击 `AssetRadar.exe`
 2. 输入目标域名（如 `xxx.edu.cn`），选择 Nmap 模式
 3. 点「开始测绘」——六个阶段进度实时显示，日志可查
 4. 完成后「打开输出目录」，报表为 `output/<目标>/资产测绘报告_<目标>.xlsx`
@@ -64,11 +64,11 @@ OneForAll 运行时说明：因 OneForAll 与 Python 3.13 不兼容（fire/pipes
 
 ## OneForAll venv（阶段①）
 
-首次已通过 `setup` 创建独立 venv（`%APPDATA%\AssetMapper\oneforall-venv`）并修补了 Python 3.13 兼容问题（fire/pipes、exrex/sre_parse）。换机器重建：
+首次已通过 `setup` 创建独立 venv（`%APPDATA%\AssetRadar\oneforall-venv`）并修补了 Python 3.13 兼容问题（fire/pipes、exrex/sre_parse）。换机器重建：
 
 ```bash
-python -m venv "%APPDATA%\AssetMapper\oneforall-venv"
-%APPDATA%\AssetMapper\oneforall-venv\Scripts\pip install -r OneForAll\requirements.txt setuptools fire
+python -m venv "%APPDATA%\AssetRadar\oneforall-venv"
+%APPDATA%\AssetRadar\oneforall-venv\Scripts\pip install -r OneForAll\requirements.txt setuptools fire
 # 修补 exrex（3.11+）：把 site-packages\exrex.py 中 `from re import sre_parse, U` 换成 try/except 兼容写法
 ```
 

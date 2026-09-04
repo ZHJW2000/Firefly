@@ -8,7 +8,7 @@ import json
 import os
 import sys
 
-_CONFIG_DIR = os.path.join(os.environ.get("APPDATA", os.path.expanduser("~")), "AssetMapper")
+_CONFIG_DIR = os.path.join(os.environ.get("APPDATA", os.path.expanduser("~")), "AssetRadar")
 CONFIG_FILE = os.path.join(_CONFIG_DIR, "tools.json")
 
 

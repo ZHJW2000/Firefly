@@ -41,7 +41,7 @@ async def _probe_all(urls: List[str], concurrency: int, timeout: int,
                      progress: Optional[Callable[[int, int], None]]) -> List[dict]:
     sem = asyncio.Semaphore(concurrency)
     conn = aiohttp.TCPConnector(limit=concurrency, ttl_dns_cache=300)
-    async with aiohttp.ClientSession(connector=conn, headers={"User-Agent": "AssetMapper/2.0"}) as session:
+    async with aiohttp.ClientSession(connector=conn, headers={"User-Agent": "AssetRadar/2.0"}) as session:
         tasks = [_probe_one(session, sem, u, timeout) for u in urls]
         results, done = [], 0
         for fut in asyncio.as_completed(tasks):
