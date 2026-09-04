@@ -9,6 +9,7 @@ import csv
 import os
 import re
 import subprocess
+import time
 
 DOMAIN_RE = re.compile(r"^(?=.{1,253}$)([a-z0-9]([-a-z0-9]{0,61}[a-z0-9])?\.)+[a-z]{2,63}$", re.I)
 
@@ -23,7 +24,8 @@ def run(ctx, log, progress, should_stop):
         log("使用手工导入的子域列表。")
         subs = list(manual)
     elif py and os.path.isfile(py) and os.path.isfile(ctx.cfg["oneforall_py"]):
-        odir = os.path.join(ctx.outdir, "oneforall")
+        # OneForAll 的 --path 需要已存在的绝对路径目录，否则会把路径当输出文件名
+        odir = os.path.abspath(os.path.join(ctx.outdir, "oneforall"))
         os.makedirs(odir, exist_ok=True)
         for f in os.listdir(odir):
             if f.endswith(".csv"):
@@ -32,25 +34,39 @@ def run(ctx, log, progress, should_stop):
         if len(targets) == 1:
             sel = ["--target", targets[0]]
         else:
-            tgt_file = os.path.join(ctx.outdir, "oneforall_targets.txt")
+            tgt_file = os.path.join(odir, "targets.txt")
             with open(tgt_file, "w", encoding="utf-8") as f:
                 f.write("\n".join(targets))
             sel = ["--targets", tgt_file]
             log(f"批量模式：{len(targets)} 个目标一次调用。")
 
         cmd = [py, ctx.cfg["oneforall_py"], *sel, "--fmt", "csv",
-               "--path", odir, "--show", "True", "run"]
+               "--path", odir, "run"]
         budget = min(3600 * max(1, len(targets)), 4 * 3600)
-        log("调用 OneForAll（被动收集，未开启爆破）…")
+        log("调用 OneForAll（被动收集，未开启爆破），过程日志实时输出…")
         try:
-            proc = subprocess.run(cmd, capture_output=True, text=True,
-                                  timeout=budget, encoding="utf-8", errors="replace",
-                                  cwd=os.path.dirname(ctx.cfg["oneforall_py"]))
+            # 实时流式读取：OneForAll 运行数分钟，静默等待会让界面看起来像卡死
+            proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+                                    text=True, encoding="utf-8", errors="replace",
+                                    cwd=os.path.dirname(ctx.cfg["oneforall_py"]))
+            t0 = time.time()
+            heartbeat = t0
+            for line in proc.stdout:
+                line = line.strip()
+                if not line:
+                    continue
+                # 只转发关键级别的行，避免刷屏
+                if any(k in line for k in ("[INFOR]", "[ALERT]", "[ERROR]")):
+                    log("  " + line[-160:])
+                elif time.time() - heartbeat >= 30:
+                    log(f"  OneForAll 运行中… {int(time.time() - t0)}s")
+                    heartbeat = time.time()
+                if time.time() - t0 > budget:
+                    proc.kill()
+                    log("OneForAll 超时被终止，使用已产出的结果。")
+                    break
+            proc.wait(timeout=60)
             log(f"OneForAll 退出码 {proc.returncode}。")
-            if proc.returncode != 0:
-                log("OneForAll stderr（末尾 500 字符）: " + (proc.stderr or "")[-500:])
-        except subprocess.TimeoutExpired:
-            log("OneForAll 超时，使用已产出的结果。")
         except Exception as e:
             log(f"OneForAll 调用失败: {e}")
 
