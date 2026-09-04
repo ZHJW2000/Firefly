@@ -58,6 +58,17 @@ def test_s1_validate():
     print("s1 域名校验通过")
 
 
+def test_s1_batch_validate():
+    subs = s1_subdomain._validate(
+        ["www.a.edu.cn", "lib.b.edu.cn", "evil.com", "x.com"],
+        ["a.edu.cn", "b.edu.cn"], lambda m: None)
+    assert subs == ["www.a.edu.cn", "lib.b.edu.cn"], subs
+    # 字符串目标兼容旧签名
+    subs2 = s1_subdomain._validate(["a.example.com"], "example.com", lambda m: None)
+    assert subs2 == ["a.example.com"], subs2
+    print("s1 批量域名校验通过")
+
+
 def test_s2_parse():
     gnmap = """# Nmap 7.80 scan initiated
 Host: 1.2.3.4 (a.example.com)\tStatus: Up
@@ -143,6 +154,7 @@ def test_risk():
 
 if __name__ == "__main__":
     test_s1_validate()
+    test_s1_batch_validate()
     test_s2_parse()
     test_risk()
     srv, _ = start_server()          # 服务器贯穿 s4/s5 测试

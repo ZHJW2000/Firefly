@@ -1,6 +1,7 @@
-"""阶段1：OneForAll 子域收集。
+"""阶段1：OneForAll 子域收集（支持批量目标）。
 
 调用 OneForAll（子进程）收集子域，过滤无效与泛解析记录。
+多目标时写入 targets 文件一次调用，逐域解析结果 CSV。
 OneForAll 不可用时降级：从手工提供的子域列表文件导入。
 """
 
@@ -13,7 +14,7 @@ DOMAIN_RE = re.compile(r"^(?=.{1,253}$)([a-z0-9]([-a-z0-9]{0,61}[a-z0-9])?\.)+[a
 
 
 def run(ctx, log, progress, should_stop):
-    target = ctx.target
+    targets = ctx.targets or [ctx.target]
     manual = ctx.data.get("manual_subdomains")  # GUI 手工导入
     py = ctx.cfg.get("oneforall_python", "")
 
@@ -24,36 +25,42 @@ def run(ctx, log, progress, should_stop):
     elif py and os.path.isfile(py) and os.path.isfile(ctx.cfg["oneforall_py"]):
         odir = os.path.join(ctx.outdir, "oneforall")
         os.makedirs(odir, exist_ok=True)
-        csv_path = os.path.join(odir, f"{target}.csv")
-        if os.path.isfile(csv_path):
-            os.remove(csv_path)
-        cmd = [py, ctx.cfg["oneforall_py"], "--target", target, "--fmt", "csv",
+        for f in os.listdir(odir):
+            if f.endswith(".csv"):
+                os.remove(os.path.join(odir, f))
+
+        if len(targets) == 1:
+            sel = ["--target", targets[0]]
+        else:
+            tgt_file = os.path.join(ctx.outdir, "oneforall_targets.txt")
+            with open(tgt_file, "w", encoding="utf-8") as f:
+                f.write("\n".join(targets))
+            sel = ["--targets", tgt_file]
+            log(f"批量模式：{len(targets)} 个目标一次调用。")
+
+        cmd = [py, ctx.cfg["oneforall_py"], *sel, "--fmt", "csv",
                "--path", odir, "--show", "True", "run"]
+        budget = min(3600 * max(1, len(targets)), 4 * 3600)
         log("调用 OneForAll（被动收集，未开启爆破）…")
         try:
             proc = subprocess.run(cmd, capture_output=True, text=True,
-                                  timeout=3600, encoding="utf-8", errors="replace",
+                                  timeout=budget, encoding="utf-8", errors="replace",
                                   cwd=os.path.dirname(ctx.cfg["oneforall_py"]))
             log(f"OneForAll 退出码 {proc.returncode}。")
             if proc.returncode != 0:
                 log("OneForAll stderr（末尾 500 字符）: " + (proc.stderr or "")[-500:])
         except subprocess.TimeoutExpired:
-            log("OneForAll 超时（1 小时），使用已产出的结果。")
+            log("OneForAll 超时，使用已产出的结果。")
         except Exception as e:
             log(f"OneForAll 调用失败: {e}")
 
-        if os.path.isfile(csv_path):
-            subs = _parse_oneforall_csv(csv_path, log)
-        else:
-            # OneForAll 有时命名带通配或时间戳，兜底找最新 csv
-            cand = [os.path.join(odir, f) for f in os.listdir(odir) if f.endswith(".csv")]
-            if cand:
-                newest = max(cand, key=os.path.getmtime)
-                subs = _parse_oneforall_csv(newest, log)
+        for f in sorted(os.listdir(odir)):
+            if f.endswith(".csv"):
+                subs.extend(_parse_oneforall_csv(os.path.join(odir, f), log))
     else:
-        log("OneForAll venv 未就绪且无手工列表，本阶段结果为空。可先运行 setup_oneforall.py，或在界面导入子域列表。")
+        log("OneForAll 运行时未就绪且无手工列表，本阶段结果为空。可在界面导入子域列表。")
 
-    subs = _validate(subs, target, log, manual=bool(manual))
+    subs = _validate(subs, targets, log, manual=bool(manual))
     log(f"有效子域 {len(subs)} 个。")
     return {"data": {"subdomains": subs}}
 
@@ -83,11 +90,13 @@ def _parse_oneforall_csv(path, log):
     return [r[sub_col].strip().lower() for r in rows if keep(r)]
 
 
-def _validate(subs, target, log, manual=False):
+def _validate(subs, targets, log, manual=False):
     """去重、过滤非法记录。自动收集时还会剔除超出目标域的记录；
     手工导入的列表视为用户明确授权范围，仅做字符合法性检查。"""
-    target = target.lower().strip()
-    root = ".".join(target.split(".")[-2:])  # 允许 xxx.edu.cn 下的子域
+    if isinstance(targets, str):
+        targets = [targets]
+    targets = [t.lower().strip() for t in targets]
+    roots = {".".join(t.split(".")[-2:]) for t in targets}
     seen, out, dropped = set(), [], 0
     for s in subs:
         s = s.strip().lower().strip(".$/").replace("http://", "").replace("https://", "").strip("/")
@@ -100,7 +109,8 @@ def _validate(subs, target, log, manual=False):
         if not manual and not DOMAIN_RE.match(s) and not re.match(r"^\d{1,3}(\.\d{1,3}){3}$", s):
             dropped += 1
             continue
-        if not manual and not (s == target or s == root or s.endswith("." + root)):
+        if not manual and not any(s == t or s == r or s.endswith("." + r)
+                                  for t in targets for r in roots):
             dropped += 1
             continue
         out.append(s)

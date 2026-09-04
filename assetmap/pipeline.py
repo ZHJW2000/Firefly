@@ -26,6 +26,11 @@ class Context:
     cfg: dict
     data: dict = field(default_factory=dict)  # 各阶段结果共享
     stop_event: Optional[threading.Event] = None
+    targets: Optional[list] = None  # 批量目标；None 时回退 [target]
+
+    def __post_init__(self):
+        if not self.targets:
+            self.targets = [self.target]
 
     def stage_file(self, idx: int) -> str:
         return os.path.join(self.outdir, f"stage{idx}_{STAGES[idx - 1][0].split('-')[1]}.json")
@@ -67,7 +72,9 @@ class Pipeline:
 
     def run(self) -> dict:
         os.makedirs(self.ctx.outdir, exist_ok=True)
-        self.log(f"目标: {self.ctx.target}，输出目录: {self.ctx.outdir}")
+        tgt = self.ctx.target if len(self.ctx.targets) == 1 else \
+            f"{self.ctx.target} 等 {len(self.ctx.targets)} 个目标"
+        self.log(f"目标: {tgt}，输出目录: {self.ctx.outdir}")
         for idx, (name, module) in enumerate(STAGES, start=1):
             if self.ctx.stop_requested():
                 self.log("已停止。")

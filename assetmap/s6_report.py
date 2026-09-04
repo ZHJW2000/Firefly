@@ -59,14 +59,18 @@ def run(ctx, log, progress, should_stop):
     rows.sort(key=lambda r: (-r["score"], r["ip"], r["port"]))
     log(f"共 {len(rows)} 个服务，最高风险 {rows[0]['score'] if rows else 0} 分。")
 
-    report = os.path.join(ctx.outdir, f"资产测绘报告_{ctx.target}.xlsx")
-    _write_excel(report, ctx.target, rows, endpoints, sensitive, ports_data,
+    targets = ctx.targets or [ctx.target]
+    if len(targets) == 1:
+        report = os.path.join(ctx.outdir, f"资产测绘报告_{ctx.target}.xlsx")
+    else:
+        report = os.path.join(ctx.outdir, f"资产测绘报告_批量{len(targets)}目标.xlsx")
+    _write_excel(report, targets, rows, endpoints, sensitive, ports_data,
                  data.get("subdomains") or [], probes)
     log("Excel 报表生成完成。")
     return {"data": {"report_path": report, "services": rows}}
 
 
-def _write_excel(path, target, rows, endpoints, sensitive, ports_data, subdomains, probes):
+def _write_excel(path, targets, rows, endpoints, sensitive, ports_data, subdomains, probes):
     wb = Workbook()
     hdr_font = Font(bold=True, color="FFFFFF")
     hdr_fill = PatternFill("solid", fgColor="4472C4")
@@ -131,7 +135,9 @@ def _write_excel(path, target, rows, endpoints, sensitive, ports_data, subdomain
     ws["A1"] = "资产测绘报告"
     ws["A1"].font = Font(bold=True, size=14)
     info = [
-        ("目标", target),
+        ("目标", "、".join(targets) if len(targets) <= 10
+         else f"{targets[0]} 等 {len(targets)} 个目标"),
+        ("目标数量", len(targets)),
         ("子域数", len(subdomains)),
         ("扫描IP数", len(ports_data)),
         ("Web存活URL数", len(probes)),

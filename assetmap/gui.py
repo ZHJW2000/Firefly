@@ -30,33 +30,37 @@ class App:
         pad = {"padx": 6, "pady": 3}
         frm = ttk.LabelFrame(self.root, text="1. 目标与配置")
         frm.pack(fill="x", **pad)
-        ttk.Label(frm, text="目标域名:").grid(row=0, column=0, sticky="e", **pad)
-        self.ent_target = ttk.Entry(frm, width=28)
-        self.ent_target.grid(row=0, column=1, **pad)
-        ttk.Label(frm, text="Nmap 模式:").grid(row=0, column=2, sticky="e", **pad)
+        ttk.Label(frm, text="目标域名:").grid(row=0, column=0, sticky="ne", **pad)
+        self.txt_targets = tk.Text(frm, width=32, height=3, font=("Consolas", 9))
+        self.txt_targets.grid(row=0, column=1, sticky="w", **pad)
+        self.lbl_tgt_count = ttk.Label(frm, text="0 个目标\n（每行一个，支持批量）", foreground="gray", justify="left")
+        self.lbl_tgt_count.grid(row=0, column=1, sticky="e", **pad)
+        self.txt_targets.bind("<KeyRelease>", lambda e: self._update_tgt_count())
+        ttk.Label(frm, text="Nmap 模式:").grid(row=1, column=0, sticky="e", **pad)
         self.cmb_mode = ttk.Combobox(frm, width=12, state="readonly",
                                      values=["top1000", "全端口"])
         self.cmb_mode.current(0)
-        self.cmb_mode.grid(row=0, column=3, **pad)
-        ttk.Button(frm, text="导入子域列表(替代阶段1)", command=self.on_import).grid(row=0, column=4, **pad)
-        ttk.Button(frm, text="工具路径设置", command=self.on_paths).grid(row=0, column=5, **pad)
-        ttk.Label(frm, text="输出目录:").grid(row=1, column=0, sticky="e", **pad)
+        self.cmb_mode.grid(row=1, column=1, sticky="w", **pad)
+        ttk.Button(frm, text="导入目标列表", command=self.on_import_targets).grid(row=1, column=2, **pad)
+        ttk.Button(frm, text="导入子域列表(替代阶段1)", command=self.on_import).grid(row=2, column=0, columnspan=2, sticky="w", **pad)
+        ttk.Button(frm, text="工具路径设置", command=self.on_paths).grid(row=1, column=3, **pad)
+        ttk.Label(frm, text="输出目录:").grid(row=2, column=0, sticky="e", **pad)
         self.ent_out = ttk.Entry(frm, width=60)
         self.ent_out.insert(0, os.path.join(os.getcwd(), "output"))
-        self.ent_out.grid(row=1, column=1, columnspan=4, sticky="w", **pad)
-        ttk.Button(frm, text="浏览…", command=self.on_browse_out).grid(row=1, column=5, **pad)
+        self.ent_out.grid(row=2, column=1, columnspan=4, sticky="w", **pad)
+        ttk.Button(frm, text="浏览…", command=self.on_browse_out).grid(row=2, column=5, **pad)
 
         self.var_auth = tk.BooleanVar(value=False)
         ttk.Checkbutton(
             frm, variable=self.var_auth,
             text="我确认已获得授权，可对上述范围内的资产进行数据安全评估",
-        ).grid(row=2, column=0, columnspan=3, sticky="w", **pad)
+        ).grid(row=3, column=0, columnspan=3, sticky="w", **pad)
 
         self.var_render = tk.BooleanVar(value=bool(self.cfg.get("headless_render", True)))
         ttk.Checkbutton(
             frm, variable=self.var_render,
             text="Edge 无头渲染动态页面（后台执行，捕获运行时注入的 JS）",
-        ).grid(row=2, column=3, columnspan=3, sticky="w", **pad)
+        ).grid(row=3, column=3, columnspan=3, sticky="w", **pad)
 
         self.frm_reuse = ttk.LabelFrame(self.root, text="2. 复用上次结果（断点续跑）")
         self.frm_reuse.pack(fill="x", **pad)
@@ -120,6 +124,34 @@ class App:
         except queue.Empty:
             pass
         self.root.after(200, self._poll)
+
+    def _update_tgt_count(self):
+        n = len(self._get_targets())
+        self.lbl_tgt_count.config(text=f"{n} 个目标\n（每行一个，支持批量）")
+
+    def _get_targets(self):
+        """读取目标输入框，去重、去空行。"""
+        seen, out = set(), []
+        for ln in self.txt_targets.get("1.0", "end").splitlines():
+            t = ln.strip().lower().rstrip("/.")
+            if t and t not in seen:
+                seen.add(t)
+                out.append(t)
+        return out
+
+    def on_import_targets(self):
+        p = filedialog.askopenfilename(filetypes=[("文本/CSV", "*.txt *.csv"), ("所有文件", "*.*")],
+                                       title="选择目标列表（每行一个域名）")
+        if not p:
+            return
+        with open(p, "r", encoding="utf-8", errors="replace") as f:
+            lines = [ln.strip() for ln in f if ln.strip()]
+        cur = self.txt_targets.get("1.0", "end").strip()
+        merged = (cur + "\n" if cur else "") + "\n".join(lines)
+        self.txt_targets.delete("1.0", "end")
+        self.txt_targets.insert("1.0", merged)
+        self._update_tgt_count()
+        self._log(f"已导入 {len(lines)} 个目标。")
 
     def on_import(self):
         p = filedialog.askopenfilename(filetypes=[("文本/CSV", "*.txt *.csv"), ("所有文件", "*.*")])
@@ -199,18 +231,25 @@ class App:
     def on_start(self):
         if self.worker and self.worker.is_alive():
             return
-        target = self.ent_target.get().strip().lower()
-        if not target or "." not in target:
-            messagebox.showwarning("提示", "请输入有效目标域名。")
+        targets = self._get_targets()
+        if not targets or any("." not in t for t in targets):
+            messagebox.showwarning("提示", "请输入有效目标域名（每行一个）。")
             return
+        if len(targets) > 50:
+            messagebox.showwarning("提示", f"目标数 {len(targets)} 过多（上限 50），请拆分批次。")
+            return
+        if len(targets) > 10:
+            self._log(f"提示：批量目标 {len(targets)} 个，子域收集将逐域进行，耗时较长。")
         if not self.var_auth.get():
             messagebox.showwarning("需要授权确认", "请先勾选授权确认。仅允许对有权限评估的资产使用本工具。")
             return
         self.cfg["nmap_mode"] = "full" if self.cmb_mode.current() == 1 else "top1000"
         self.cfg["headless_render"] = bool(self.var_render.get())
         save(self.cfg)
-        outdir = default_outdir(self.ent_out.get().strip() or os.path.join(os.getcwd(), "output"), target)
-        ctx = Context(target=target, outdir=outdir, cfg=dict(self.cfg), stop_event=self.stop_event)
+        outdir = default_outdir(self.ent_out.get().strip() or os.path.join(os.getcwd(), "output"),
+                                targets[0] if len(targets) == 1 else f"batch_{len(targets)}目标")
+        ctx = Context(target=targets[0], outdir=outdir, cfg=dict(self.cfg),
+                      stop_event=self.stop_event, targets=targets)
         if getattr(self, "manual_subdomains", None):
             ctx.data["manual_subdomains"] = self.manual_subdomains
         reuse = {i for i, v in enumerate(self.reuse_vars, 1) if v.get()}
