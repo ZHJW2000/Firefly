@@ -13,15 +13,21 @@ import threading
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 os.chdir(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from assetmap import s2_portscan, s3_finger
+from assetmap import render, s2_portscan, s3_finger, s5_crawl
 from assetmap.s4_probe import probe_urls
 
 INDEX = "<html><head><title>IntegTest OA</title></head><body><a href='/static/app.js'>app</a></body></html>"
 APP_JS = "var cfg={password:'IntegTest@123',api:'/api/v1/info'};"
+DYN_PAGE = ("<html><head><title>DynPage</title></head><body>"
+            "<script>var s=document.createElement('script');"
+            "s.src='/static/secret.js';document.body.appendChild(s);</script>"
+            "</body></html>")
+SECRET_JS = "var cfg={password:'DynPass@123',api:'/api/v1/x'};"
 
 
 class Handler(http.server.BaseHTTPRequestHandler):
-    PAGES = {"/": INDEX, "/static/app.js": APP_JS}
+    PAGES = {"/": INDEX, "/static/app.js": APP_JS, "/dyn": DYN_PAGE,
+             "/static/secret.js": SECRET_JS}
 
     def do_GET(self):
         body = self.PAGES.get(self.path)
@@ -102,6 +108,16 @@ def main():
                capture_output=True, text=True, timeout=600, encoding="utf-8", errors="replace")
     endpoints = [ln.strip() for ln in open(ep, encoding="utf-8", errors="replace") if ln.strip()] if os.path.isfile(ep) else []
     print(f"[5] Katana 端点 {len(endpoints)} 个: {endpoints[:3]}")
+
+    # 阶段5 增强：Edge 无头渲染动态注入页面
+    print("[6] Edge 无头渲染动态页面…")
+    doms, dyn_js = render.render_all(
+        [f"http://127.0.0.1:{port}/dyn"], outdir, print,
+        lambda d, t: None, lambda: False, max_pages=5)
+    assert any(u.endswith("/static/secret.js") for u in dyn_js), f"未捕获动态注入 JS: {dyn_js}"
+    findings = s5_crawl._scan_js(dyn_js, print, lambda d, t: None, lambda: False)
+    assert any(f["rule"] == "硬编码密码" for f in findings), findings
+    print("[6] 动态注入 JS 已捕获并命中敏感规则 ✓")
 
     srv.shutdown()
     print("\n=== 本机集成联调通过 ===")

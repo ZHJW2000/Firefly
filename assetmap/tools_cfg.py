@@ -33,6 +33,9 @@ DEFAULTS = {
     "nmap_mode": "top1000",  # top1000 / full
     "probe_concurrency": 100,
     "katana_depth": 2,
+    "headless_render": True,   # Edge/Chrome 无头渲染动态页面
+    "render_max": 100,         # 最多渲染的页面数
+    "msedge_exe": "",          # 留空自动探测 Edge/Chrome
 }
 
 # 内置发行包中的相对路径

@@ -1,7 +1,8 @@
-"""阶段5：Katana 爬取 API 端点 + JS 硬编码敏感数据扫描。
+"""阶段5：Katana 爬取 API 端点 + 无头渲染动态页面 + JS 硬编码敏感数据扫描。
 
-Katana 深度爬取（默认 -d 2）提取端点；对发现的 .js 文件抓取内容，
-按内置正则规则扫描硬编码凭据/连接串/密钥等敏感数据。
+Katana 深度爬取（默认 -d 2，-js-crawl 解析 JS 内端点）；Edge/Chrome 无头渲染
+执行页面 JS，提取运行时注入的 <script src> 与渲染后 DOM 的敏感内容；
+对发现的 .js 文件抓取内容按内置正则规则扫描硬编码凭据/连接串/密钥等。
 """
 
 import os
@@ -10,6 +11,8 @@ import subprocess
 from concurrent.futures import ThreadPoolExecutor
 
 import requests
+
+from . import render
 
 SENSITIVE_RULES = [
     ("硬编码云密钥(AK/SK)", r"(?i)(access[_-]?key|secret[_-]?key|ak|sk)\s*[:=]\s*['\"][A-Za-z0-9/+=_\-]{16,}['\"]"),
@@ -36,7 +39,7 @@ def run(ctx, log, progress, should_stop):
         with open(lst, "w", encoding="utf-8") as f:
             f.write("\n".join(urls))
         cmd = [katana, "-list", os.path.abspath(lst), "-d", depth,
-               "-silent", "-o", os.path.abspath(out)]
+               "-jc", "-silent", "-o", os.path.abspath(out)]
         log(f"运行 Katana（深度 {depth}）…")
         try:
             proc = subprocess.run(cmd, capture_output=True, text=True, timeout=3600,
@@ -56,7 +59,28 @@ def run(ctx, log, progress, should_stop):
 
     js_files = [u for u in endpoints if u.split("?")[0].lower().endswith(".js")]
     log(f"发现 JS 文件 {len(js_files)} 个，扫描硬编码敏感数据…")
-    sensitive = _scan_js(js_files, log, progress, should_stop)
+
+    # 无头渲染动态页面：提取运行时注入的 <script>/网络 JS 与渲染后 DOM 的敏感内容
+    if ctx.cfg.get("headless_render", True) and urls:
+        try:
+            doms, dyn_js = render.render_all(
+                urls, ctx.outdir, log, progress, should_stop,
+                cfg=ctx.cfg, max_pages=ctx.cfg.get("render_max", 100),
+            )
+            # 渲染后 DOM 也过一遍敏感数据规则
+            for item in doms:
+                for rule_name, pattern in SENSITIVE_RULES:
+                    m = re.search(pattern, item["dom"])
+                    if m:
+                        ev = item["dom"][max(0, m.start() - 30):m.end() + 60].replace("\n", " ")[:160]
+                        sensitive.append({"url": item["url"], "rule": f"渲染DOM-{rule_name}", "evidence": ev})
+            # 动态发现的 JS 并入待扫描列表与端点清单
+            js_files = sorted(set(js_files) | set(dyn_js))
+            endpoints = sorted(set(endpoints) | set(dyn_js))
+        except Exception as e:
+            log(f"无头渲染异常（已跳过）: {e}")
+
+    sensitive.extend(_scan_js(js_files, log, progress, should_stop))
     log(f"敏感数据命中 {len(sensitive)} 条。")
     return {"data": {"endpoints": endpoints, "sensitive": sensitive}}
 

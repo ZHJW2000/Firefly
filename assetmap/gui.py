@@ -45,6 +45,18 @@ class App:
         self.ent_out.insert(0, os.path.join(os.getcwd(), "output"))
         self.ent_out.grid(row=1, column=1, columnspan=4, sticky="w", **pad)
 
+        self.var_auth = tk.BooleanVar(value=False)
+        ttk.Checkbutton(
+            frm, variable=self.var_auth,
+            text="我确认已获得授权，可对上述范围内的资产进行数据安全评估",
+        ).grid(row=2, column=0, columnspan=3, sticky="w", **pad)
+
+        self.var_render = tk.BooleanVar(value=bool(self.cfg.get("headless_render", True)))
+        ttk.Checkbutton(
+            frm, variable=self.var_render,
+            text="Edge 无头渲染动态页面（后台执行，捕获运行时注入的 JS）",
+        ).grid(row=2, column=3, columnspan=3, sticky="w", **pad)
+
         self.frm_reuse = ttk.LabelFrame(self.root, text="2. 复用上次结果（断点续跑）")
         self.frm_reuse.pack(fill="x", **pad)
         self.reuse_vars = []
@@ -164,7 +176,11 @@ class App:
         if not target or "." not in target:
             messagebox.showwarning("提示", "请输入有效目标域名。")
             return
+        if not self.var_auth.get():
+            messagebox.showwarning("需要授权确认", "请先勾选授权确认。仅允许对有权限评估的资产使用本工具。")
+            return
         self.cfg["nmap_mode"] = "full" if self.cmb_mode.current() == 1 else "top1000"
+        self.cfg["headless_render"] = bool(self.var_render.get())
         save(self.cfg)
         outdir = default_outdir(self.ent_out.get().strip() or os.path.join(os.getcwd(), "output"), target)
         ctx = Context(target=target, outdir=outdir, cfg=dict(self.cfg), stop_event=self.stop_event)

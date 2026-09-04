@@ -34,6 +34,7 @@ def run(ctx, log, progress, should_stop):
     mode = ctx.cfg.get("nmap_mode", "top1000")
     gnmap = os.path.join(ctx.outdir, "nmap_result.gnmap")
     cmd = [ctx.cfg["nmap_exe"], "-sT", "-Pn", "-T4", "--open",
+           "--host-timeout", "600s", "--max-retries", "2",
            "-iL", targets_file, "-oG", gnmap]
     if mode == "full":
         cmd = cmd[:4] + ["-p1-65535", "--min-rate", "2000"] + cmd[4:]
@@ -41,15 +42,23 @@ def run(ctx, log, progress, should_stop):
     else:
         log("top1000 模式。")
     log("运行 Nmap…")
+    # 输出直接落盘：避免工具异常刷屏时把内存撑爆；进程超时后强杀
+    timeout = 6 * 3600 if mode == "full" else 1800
+    out_f = open(gnmap + ".console", "w", encoding="utf-8", errors="replace")
     try:
-        proc = subprocess.run(cmd, capture_output=True, text=True, timeout=6 * 3600,
-                              encoding="utf-8", errors="replace")
-        if proc.returncode != 0:
-            log(f"Nmap 退出码 {proc.returncode}: {(proc.stderr or '')[-300:]}")
-    except subprocess.TimeoutExpired:
-        log("Nmap 超时，解析已有输出。")
+        proc = subprocess.Popen(cmd, stdout=out_f, stderr=subprocess.STDOUT,
+                                stdin=subprocess.DEVNULL)
+        try:
+            proc.wait(timeout=timeout)
+            if proc.returncode != 0:
+                log(f"Nmap 退出码 {proc.returncode}（详见 nmap_result.gnmap.console）")
+        except subprocess.TimeoutExpired:
+            proc.kill()
+            log("Nmap 超时被终止，解析已有输出。")
     except FileNotFoundError:
         raise RuntimeError(f"找不到 nmap.exe: {ctx.cfg['nmap_exe']}，请在界面修正路径")
+    finally:
+        out_f.close()
 
     ports = _parse_gnmap(gnmap, dns)
     total = sum(len(p["ports"]) for p in ports)
