@@ -56,8 +56,6 @@ def setup_style(root: tk.Tk):
     style.map("Danger.TButton",
               background=[("active", "#b8433f"), ("disabled", "#e0a9a7")])
 
-    style.configure("Card.TCheckbutton", background=C_CARD)
-    style.map("Card.TCheckbutton", background=[("active", C_CARD)])
     style.configure("TEntry", padding=3)
     style.configure("TCombobox", padding=3)
     style.configure("Stage.Horizontal.TProgressbar", troughcolor="#e4e9f2",
@@ -160,8 +158,9 @@ class App:
         self.reuse_vars = []
         for name, _ in STAGES:
             v = tk.BooleanVar(value=False)
-            ttk.Checkbutton(self.frm_reuse, text=name.split("-")[-1], variable=v,
-                            style="Card.TCheckbutton").pack(side="left", padx=3)
+            tk.Checkbutton(self.frm_reuse, text=name.split("-")[-1], variable=v,
+                           font=FONT, bg=C_CARD, fg="#2c3e50",
+                           activebackground=C_CARD).pack(side="left", padx=3)
             self.reuse_vars.append(v)
 
         # 3. 阶段进度（卡片网格）
