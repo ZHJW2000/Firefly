@@ -17,15 +17,16 @@ WELLKNOWN = {80, 443}
 def build_candidate_urls(ports_data) -> list:
     urls = []
     for entry in ports_data:
-        ip = entry["ip"]
+        # 有域名的资产优先用域名构造 URL（vhost 场景指纹更准）
+        base_host = entry["hosts"][0] if entry.get("hosts") else entry["ip"]
         for p in entry["ports"]:
             port = p["port"]
             if port in HTTPS_PORTS:
-                candidates = [f"https://{ip}:{port}"]
+                candidates = [f"https://{base_host}:{port}"]
             elif port in WELLKNOWN:
-                candidates = [f"http://{ip}:{port}" if port == 80 else f"https://{ip}:{port}"]
+                candidates = [f"http://{base_host}:{port}" if port == 80 else f"https://{base_host}:{port}"]
             else:
-                candidates = [f"http://{ip}:{port}", f"https://{ip}:{port}"]
+                candidates = [f"http://{base_host}:{port}", f"https://{base_host}:{port}"]
             urls.extend(candidates)
     return list(dict.fromkeys(urls))
 

@@ -34,7 +34,7 @@ def _launch_browser(playwright, cfg):
 
 def render_all(urls, outdir, log, progress, should_stop,
                cfg=None, max_pages=100, timeout_ms=15000, concurrency=3):
-    """并发渲染一批 URL。
+    """顺序渲染一批 URL（复用同一浏览器实例，稳定且省资源）。
 
     返回 (渲染DOM列表, 动态发现的JS URL列表):
       doms = [{"url", "dom"}]
@@ -50,7 +50,7 @@ def render_all(urls, outdir, log, progress, should_stop,
     targets = list(dict.fromkeys(urls))[:max_pages]
     if not targets:
         return [], []
-    log(f"无头渲染 {len(targets)} 个页面（并发 {concurrency}，超时 {timeout_ms // 1000}s）…")
+    log(f"无头渲染 {len(targets)} 个页面（超时 {timeout_ms // 1000}s/页）…")
 
     doms, js_urls = [], []
     done = 0

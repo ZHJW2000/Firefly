@@ -31,6 +31,7 @@ DEFAULTS = {
     # OneForAll 运行时 python；为空则用系统 python
     "oneforall_python": "",
     "nmap_mode": "top1000",  # top1000 / full
+    "nmap_ports": "",             # 自定义端口范围（如 80-443,8080）；留空按 nmap_mode
     "probe_concurrency": 100,
     "katana_depth": 2,
     "headless_render": True,   # Edge/Chrome 无头渲染动态页面

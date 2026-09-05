@@ -102,7 +102,7 @@ class Pipeline:
                 self.log(f"[阶段{idx}] {name} 异常: {e}")
                 self.log(traceback.format_exc(limit=3))
                 self.stage_status(idx, f"失败: {e}")
-                raise
+                self.log(f"[阶段{idx}] 继续执行后续阶段（下游将跳过缺失数据）。")
             self.ctx.save(idx, payload)
             self.ctx.data.update(payload.get("data", {}))
             cost = time.time() - t0

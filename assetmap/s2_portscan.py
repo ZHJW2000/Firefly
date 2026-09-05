@@ -58,9 +58,13 @@ def run(ctx, log, progress, should_stop):
     cmd = [ctx.cfg["nmap_exe"], "-sT", "-Pn", "-T4", "--open",
            "--host-timeout", "600s", "--max-retries", "2",
            "-iL", targets_file, "-oG", gnmap]
+    ports_spec = (ctx.cfg.get("nmap_ports") or "").strip()
     if mode == "full":
         cmd = cmd[:4] + ["-p1-65535", "--min-rate", "2000"] + cmd[4:]
         log("全端口模式（1-65535，--min-rate 2000），大网段可能耗时较长…")
+    elif ports_spec:
+        cmd = cmd[:4] + [f"-p{ports_spec}"] + cmd[4:]
+        log(f"自定义端口范围: {ports_spec}")
     else:
         log("top1000 模式。")
     log("运行 Nmap…")
@@ -84,6 +88,12 @@ def run(ctx, log, progress, should_stop):
         out_f.close()
 
     ports = _parse_gnmap(gnmap, dns)
+    if fofa_ports and not verify:
+        # 补扫模式：FOFA 资产端口 + 新发现 IP 的 Nmap 结果合并
+        nmap_map = {e["ip"]: e for e in ports}
+        ports = fofa_ports + [e for ip, e in nmap_map.items() if ip not in fofa_ips]
+        ports.sort(key=lambda x: tuple(int(i) for i in x["ip"].split(".")))
+    # 验证扫描模式：Nmap 结果更完整（含服务名），直接覆盖 FOFA 端口
     total = sum(len(p["ports"]) for p in ports)
     log(f"扫描完成：{len(ports)} 个 IP，共 {total} 个开放端口。")
     return {"data": {"dns": dns, "ips": ips, "ports": ports}}

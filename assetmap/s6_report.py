@@ -1,6 +1,7 @@
 """阶段6：整合五阶段结果，风险评分排序，输出 Excel 报表。"""
 
 import os
+from urllib.parse import urlparse
 
 from openpyxl import Workbook
 from openpyxl.styles import Font, PatternFill
@@ -17,35 +18,45 @@ def run(ctx, log, progress, should_stop):
     endpoints = data.get("endpoints") or []
     sensitive = data.get("sensitive") or []
 
-    # 敏感数据按来源 host 归类
-    from urllib.parse import urlparse
-    sens_by_origin = {}
-    for s in sensitive:
-        sens_by_origin.setdefault(urlparse(s["url"]).netloc, []).append(s)
+    # 预解析端点，便于按 host+port 归属
+    def _hostport(u):
+        pr = urlparse(u)
+        port = pr.port or (443 if pr.scheme == "https" else 80)
+        return pr.hostname, port
+
+    ep_parsed = [(_hostport(u), u) for u in endpoints]
+    sens_parsed = [(_hostport(s["url"]), s) for s in sensitive]
+    probe_parsed = []
+    for u, pr in probes.items():
+        h, pt = _hostport(u)
+        probe_parsed.append(((h, pt), u, pr, fps.get(u)))
 
     # 逐服务评分并排序
     rows = []
     for entry in ports_data:
         ip = entry["ip"]
         hosts = entry.get("hosts") or []
+        host_set = {ip} | set(hosts)
         for p in entry["ports"]:
             port = p["port"]
-            is_web = bool(
-                [u for u in probes if urlparse(u).netloc in (f"{ip}:{port}",)]
-            ) or port in (80, 443, 8080, 8443, 8000, 8008, 8888, 7001, 9090)
-            # 找该服务的探测/指纹记录（可能跟随重定向，做后缀匹配）
-            probe = fps_ = None
-            fp_text = ""
-            for u in probes:
-                if urlparse(u).netloc == f"{ip}:{port}":
-                    probe = probes[u]
-                    fps_ = fps.get(u)
-                    if fps_:
-                        fp_text = " / ".join(x for x in (fps_.get("cms"), fps_.get("server")) if x)
+            # 探测/指纹记录：IP 或任一域名 + 端口匹配（重定向到其他域名时按端口回退）
+            probe, fps_, fp_text = None, None, ""
+            for (h, pt), u, pr, fp in probe_parsed:
+                if pt == port and (h in host_set or h is None):
+                    probe, fps_ = pr, fp
+                    if fp:
+                        fp_text = " / ".join(x for x in (fp.get("cms"), fp.get("server")) if x)
                     break
-            origin = f"{ip}:{port}"
-            n_ep = len([u for u in endpoints if urlparse(u).netloc == origin])
-            n_sens = len(sens_by_origin.get(origin, []))
+            if probe is None:
+                for (h, pt), u, pr, fp in probe_parsed:
+                    if pt == port:
+                        probe, fps_ = pr, fp
+                        if fp:
+                            fp_text = " / ".join(x for x in (fp.get("cms"), fp.get("server")) if x)
+                        break
+            n_ep = sum(1 for (h, pt), _ in ep_parsed if pt == port and h in host_set)
+            n_sens = sum(1 for (h, pt), s in sens_parsed if pt == port and h in host_set)
+            is_web = bool(probe) or port in (80, 443, 8080, 8443, 8000, 8008, 8888, 7001, 9090)
             score, reasons = score_service(port, p.get("service", ""), fp_text, n_sens, is_web)
             probe = probe or {}
             rows.append({
@@ -53,7 +64,7 @@ def run(ctx, log, progress, should_stop):
                 "ip": ip, "host": hosts[0] if hosts else "", "port": port,
                 "service": p.get("service", ""), "finger": fp_text,
                 "status": probe.get("status", ""), "title": probe.get("title", "") or (fps_ or {}).get("title", ""),
-                "url": next((u for u in probes if urlparse(u).netloc == origin), ""),
+                "url": probe.get("url", "") if probe else "",
                 "n_ep": n_ep, "n_sens": n_sens,
             })
     rows.sort(key=lambda r: (-r["score"], r["ip"], r["port"]))

@@ -54,6 +54,7 @@ def main():
         "oneforall_py": "",
         "nmap_exe": r"E:\Cybersecurity\tools\01-Information-Gathering\Nmap\nmap.exe",
         "nmap_mode": "top1000",
+        "nmap_ports": "8000-9000",   # 测试环境限定端口段，避开本机其他服务干扰
         "ehole_exe": r"E:\Cybersecurity\One-Fox\tools\gui_scan\ehole\EHole_windows_amd64.exe",
         "ehole_cwd": r"E:\Cybersecurity\One-Fox\tools\gui_scan\ehole",
         "katana_exe": r"E:\Cybersecurity\tools\01-Information-Gathering\katana\katana.exe",
@@ -61,7 +62,7 @@ def main():
     }
     ctx = Context(target="e2e.local", outdir=outdir, cfg=cfg)
     # 阶段1降级：手工子域列表（等价 GUI 导入）
-    ctx.data["manual_subdomains"] = ["localhost"]
+    ctx.data["manual_subdomains"] = ["127.0.0.1"]
     statuses = {}
     pipe = Pipeline(ctx, log=lambda m: print("   ", m),
                     progress=lambda i, d, t: None,

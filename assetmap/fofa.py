@@ -127,13 +127,18 @@ def build_query(names: List[str], query_type: str) -> str:
 
 
 def assets_to_ports_data(assets: List[dict]) -> List[dict]:
-    """把 FOFA 资产转成流水线端口数据结构（按 IP 聚合）。"""
+    """把 FOFA 资产转成流水线端口数据结构（按 IP 聚合）。
+
+    非法 IP / 端口记录直接丢弃，避免污染下游 Nmap 与排序。
+    """
+    import ipaddress
     grouped = {}
     for a in assets:
         ip = str(a.get("ip", "")).strip()
         host = re.sub(r"^[a-z]+://", "", str(a.get("host", "")).strip(), flags=re.I)
         try:
             port = int(a.get("port", 0))
+            ipaddress.ip_address(ip)  # 校验 IP 格式
         except (ValueError, TypeError):
             continue
         if not ip or not port:
