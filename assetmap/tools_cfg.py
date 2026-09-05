@@ -36,8 +36,8 @@ DEFAULTS = {
     "headless_render": True,   # Edge/Chrome 无头渲染动态页面
     "render_max": 100,         # 最多渲染的页面数
     "msedge_exe": "",          # 留空自动探测 Edge/Chrome
-    # FOFA 模式
-    "collect_mode": "oneforall",  # oneforall / fofa
+    # FOFA 优先收集
+    "fofa_enabled": True,         # FOFA 优先收集互联网暴露资产
     "fofa_email": "",
     "fofa_key": "",
     "fofa_query_type": "org",     # org / title / domain / custom
@@ -81,6 +81,8 @@ def load() -> dict:
                 cfg.update({k: v for k, v in json.load(f).items() if k in DEFAULTS})
         except Exception:
             pass
+    # 旧版本保存的配置可能含 None，回退默认值
+    cfg = {k: (DEFAULTS[k] if v is None else v) for k, v in cfg.items()}
     return apply_bundled(cfg)
 
 

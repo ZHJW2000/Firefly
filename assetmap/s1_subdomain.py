@@ -45,10 +45,11 @@ def _collect_fofa(ctx, targets, log, progress, should_stop):
     """FOFA 收集：域名走 domain=，名称走 org=/title=。返回端口数据（无则空表）。"""
     email = ctx.cfg.get("fofa_email", "").strip()
     key = ctx.cfg.get("fofa_key", "").strip()
-    if not (email and key):
-        log("未配置 FOFA 账号，跳过 FOFA 收集（可在界面「FOFA 设置…」配置）。")
+    # FOFA 实测支持仅凭 Key 认证（email 可空）
+    if not key:
+        log("未配置 FOFA API Key，跳过 FOFA 收集（可在界面「FOFA 设置…」配置）。")
         return []
-    if not ctx.cfg.get("fofa_enabled", True):
+    if ctx.cfg.get("fofa_enabled") is False:
         log("FOFA 收集已关闭，仅用 OneForAll。")
         return []
 
