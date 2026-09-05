@@ -18,7 +18,8 @@ def build_candidate_urls(ports_data) -> list:
     urls = []
     for entry in ports_data:
         # 有域名的资产优先用域名构造 URL（vhost 场景指纹更准）
-        base_host = entry["hosts"][0] if entry.get("hosts") else entry["ip"]
+        ip = entry["ip"]
+        base_host = entry["hosts"][0] if entry.get("hosts") else (f"[{ip}]" if ":" in ip else ip)
         for p in entry["ports"]:
             port = p["port"]
             if port in HTTPS_PORTS:

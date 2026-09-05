@@ -90,6 +90,7 @@ class Pipeline:
             self.stage_status(idx, "运行中…")
             t0 = time.time()
             self.log(f"[阶段{idx}] {name} 开始…")
+            payload = None
             try:
                 payload = module.run(
                     self.ctx,
@@ -103,8 +104,9 @@ class Pipeline:
                 self.log(traceback.format_exc(limit=3))
                 self.stage_status(idx, f"失败: {e}")
                 self.log(f"[阶段{idx}] 继续执行后续阶段（下游将跳过缺失数据）。")
-            self.ctx.save(idx, payload)
-            self.ctx.data.update(payload.get("data", {}))
+            if payload is not None:
+                self.ctx.save(idx, payload)
+                self.ctx.data.update(payload.get("data", {}))
             cost = time.time() - t0
             self.stage_status(idx, f"完成（{cost:.0f}s）")
             self.log(f"[阶段{idx}] {name} 完成，耗时 {cost:.0f}s。")

@@ -137,13 +137,14 @@ def assets_to_ports_data(assets: List[dict]) -> List[dict]:
         ip = str(a.get("ip", "")).strip()
         host = re.sub(r"^[a-z]+://", "", str(a.get("host", "")).strip(), flags=re.I)
         try:
+            ip_obj = ipaddress.ip_address(ip)  # 校验 IP 格式（v4/v6 均可）
             port = int(a.get("port", 0))
-            ipaddress.ip_address(ip)  # 校验 IP 格式
         except (ValueError, TypeError):
+            continue  # 字段错位/畸形记录直接丢弃
+        if not ip or not (0 < port <= 65535):
             continue
-        if not ip or not port:
-            continue
-        entry = grouped.setdefault(ip, {"ip": ip, "hosts": [], "ports": []})
+        entry = grouped.setdefault(ip, {"ip": ip, "ipv6": ip_obj.version == 6,
+                                        "hosts": [], "ports": []})
         domain = str(a.get("domain", "")).strip()
         host_name = host.split(":")[0] if host else domain
         for h in (host_name, domain):
@@ -153,4 +154,7 @@ def assets_to_ports_data(assets: List[dict]) -> List[dict]:
             entry["ports"].append({"port": port, "service": "unknown"})
     for e in grouped.values():
         e["ports"].sort(key=lambda x: x["port"])
-    return sorted(grouped.values(), key=lambda x: tuple(int(i) for i in x["ip"].split(".")))
+    def _key(e):
+        o = ipaddress.ip_address(e["ip"])
+        return (o.version, int(o))
+    return sorted(grouped.values(), key=_key)

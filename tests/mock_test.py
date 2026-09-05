@@ -160,9 +160,14 @@ def test_fofa_client():
         {"host": "http://www.a.com", "ip": "1.1.1.1", "port": 80, "domain": "a.com"},
         {"host": "b.com:8080", "ip": "2.2.2.2", "port": 8080, "domain": ""},
         {"host": "c.com", "ip": "1.1.1.1", "port": 443, "domain": "c.com"},
+        # IPv6 资产 + 畸形记录
+        {"host": "v6.com", "ip": "2409:8c62:e10:8:0:2:8000:7", "port": 8000, "domain": "v6.com"},
+        {"host": "bad.com", "ip": "not-an-ip", "port": "2409:8c62", "domain": ""},
     ]
     ports = fm.assets_to_ports_data(assets)
-    assert len(ports) == 2, ports
+    assert len(ports) == 3, ports  # v4×2 + v6×1，畸形记录被丢弃
+    e6 = next(e for e in ports if e.get("ipv6"))
+    assert e6["ip"].startswith("2409:") and e6["ports"][0]["port"] == 8000
     e1 = next(e for e in ports if e["ip"] == "1.1.1.1")
     assert [p["port"] for p in e1["ports"]] == [80, 443]
     assert "www.a.com" in e1["hosts"] and "c.com" in e1["hosts"]

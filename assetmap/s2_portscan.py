@@ -26,7 +26,10 @@ def run(ctx, log, progress, should_stop):
         resolved = _resolve_all(subs, progress)
     dns = resolved
     all_ips = {ip for ip in resolved.values() if ip} | fofa_ips
-    ips = sorted(all_ips, key=ipaddress.ip_address)
+    def _ip_key(o):
+        a = ipaddress.ip_address(o)
+        return (a.version, int(a))
+    ips = sorted(all_ips, key=_ip_key)
 
     verify = ctx.cfg.get("fofa_verify_scan", False)
     new_ips = [ip for ip in ips if ip not in fofa_ips]
@@ -46,8 +49,13 @@ def run(ctx, log, progress, should_stop):
     if not scan_ips:
         log("无可扫描 IP，跳过。")
         return {"data": {"dns": dns, "ips": ips, "ports": fofa_ports}}
-    ips_sorted_scan = sorted(scan_ips, key=ipaddress.ip_address)
-    log(f"待扫描 {len(ips_sorted_scan)} 个 IP。")
+    # Nmap -sT 为 IPv4 扫描；IPv6 资产复用 FOFA 端口数据，不参与 Nmap
+    v4_scan = [ip for ip in scan_ips if ":" not in ip]
+    v6_kept = len(scan_ips) - len(v4_scan)
+    ips_sorted_scan = sorted(v4_scan, key=lambda o: ipaddress.ip_address(o))
+    if v6_kept:
+        log(f"其中 {v6_kept} 个 IPv6 资产复用 FOFA 端口数据，不参与 Nmap。")
+    log(f"待扫描 {len(ips_sorted_scan)} 个 IPv4 地址。")
 
     targets_file = os.path.join(ctx.outdir, "nmap_targets.txt")
     with open(targets_file, "w") as f:
@@ -92,7 +100,7 @@ def run(ctx, log, progress, should_stop):
         # 补扫模式：FOFA 资产端口 + 新发现 IP 的 Nmap 结果合并
         nmap_map = {e["ip"]: e for e in ports}
         ports = fofa_ports + [e for ip, e in nmap_map.items() if ip not in fofa_ips]
-        ports.sort(key=lambda x: tuple(int(i) for i in x["ip"].split(".")))
+        ports.sort(key=lambda x: _ip_key(x["ip"]))
     # 验证扫描模式：Nmap 结果更完整（含服务名），直接覆盖 FOFA 端口
     total = sum(len(p["ports"]) for p in ports)
     log(f"扫描完成：{len(ports)} 个 IP，共 {total} 个开放端口。")
