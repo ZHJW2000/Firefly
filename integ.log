@@ -1,0 +1,48 @@
+----------------------------------------
+Exception occurred during processing of request from ('127.0.0.1', 50709)
+Traceback (most recent call last):
+  File "E:\Javasoft\Python\Lib\socketserver.py", line 697, in process_request_thread
+    self.finish_request(request, client_address)
+    ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Javasoft\Python\Lib\socketserver.py", line 362, in finish_request
+    self.RequestHandlerClass(request, client_address, self)
+    ~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Javasoft\Python\Lib\socketserver.py", line 766, in __init__
+    self.handle()
+    ~~~~~~~~~~~^^
+  File "E:\Javasoft\Python\Lib\http\server.py", line 447, in handle
+    self.handle_one_request()
+    ~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "E:\Javasoft\Python\Lib\http\server.py", line 415, in handle_one_request
+    self.raw_requestline = self.rfile.readline(65537)
+                           ~~~~~~~~~~~~~~~~~~~^^^^^^^
+  File "E:\Javasoft\Python\Lib\socket.py", line 719, in readinto
+    return self._sock.recv_into(b)
+           ~~~~~~~~~~~~~~~~~~~~^^^
+ConnectionResetError: [WinError 10054] 远程主机强迫关闭了一个现有的连接。
+----------------------------------------
+Exception in callback _ProactorBasePipeTransport._call_connection_lost()
+handle: <Handle _ProactorBasePipeTransport._call_connection_lost()>
+Traceback (most recent call last):
+  File "E:\Javasoft\Python\Lib\asyncio\events.py", line 89, in _run
+    self._context.run(self._callback, *self._args)
+    ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Javasoft\Python\Lib\asyncio\proactor_events.py", line 165, in _call_connection_lost
+    self._sock.shutdown(socket.SHUT_RDWR)
+    ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^
+ConnectionResetError: [WinError 10054] 远程主机强迫关闭了一个现有的连接。
+[1] mock 服务已起: http://127.0.0.1:8000
+[2] 运行 Nmap (top1000, 127.0.0.1)…
+[2] Nmap 发现 19 个端口，含 mock 端口 8000 ✓
+[3] 候选 URL 38 个，存活探测…
+[3] 存活 8 个 ✓
+[4] 运行 EHole…
+[4] EHole 输出 8 条: [{'url': 'http://127.0.0.1:7897', 'cms': '', 'server': 'None', 'status': 400, 'title': ''}, {'url': 'http://127.0.0.1:9210', 'cms': '', 'server': 'None', 'status': 200, 'title': ''}]
+[5] 运行 Katana…
+[5] Katana 端点 2 个: ['http://127.0.0.1:8000', 'http://127.0.0.1:8000/static/app.js']
+[6] Edge 无头渲染动态页面…
+无头渲染 1 个页面（并发 3，超时 15s）…
+渲染完成：1 页成功，动态发现 JS 1 个。
+[6] 动态注入 JS 已捕获并命中敏感规则 ✓
+
+=== 本机集成联调通过 ===

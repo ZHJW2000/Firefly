@@ -1,0 +1,16 @@
+   82.6s | [阶段3] 3-指纹识别 完成，耗时 0s。
+   82.6s | [阶段4] 4-Web探测 开始…
+   82.6s | [阶段4] 无候选 URL，跳过。
+   82.6s | [阶段4] 4-Web探测 完成，耗时 0s。
+   82.6s | [阶段5] 5-端点爬取 开始…
+   82.6s | [阶段5] Katana 不可用或无存活 URL，端点爬取跳过。
+   82.6s | [阶段5] 发现 JS 文件 0 个，扫描硬编码敏感数据…
+   82.6s | [阶段5] 敏感数据命中 0 条。
+   82.6s | [阶段5] 5-端点爬取 完成，耗时 0s。
+   82.6s | [阶段6] 6-汇总报表 开始…
+   82.6s | [阶段6] 共 0 个服务，最高风险 0 分。
+   82.7s | [阶段6] Excel 报表生成完成。
+   82.7s | [阶段6] 6-汇总报表 完成，耗时 0s。
+   82.7s | 报表已生成: D:\AIStorage\Zcode\SecurityTools\asset-mapper\output\audit_fofa\资产测绘报告_kingsunedu.com.xlsx
+>>> 已结束
+报表: D:\AIStorage\Zcode\SecurityTools\asset-mapper\output\audit_fofa\资产测绘报告_kingsunedu.com.xlsx

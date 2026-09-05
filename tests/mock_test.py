@@ -152,9 +152,37 @@ def test_risk():
     print("risk 评分通过")
 
 
+def test_fofa_client():
+    from assetmap import fofa as fm
+    # 端口聚合：host 带协议前缀、按 IP 分组去重
+    assets = [
+        {"host": "https://www.a.com", "ip": "1.1.1.1", "port": 443, "domain": "www.a.com"},
+        {"host": "http://www.a.com", "ip": "1.1.1.1", "port": 80, "domain": "a.com"},
+        {"host": "b.com:8080", "ip": "2.2.2.2", "port": 8080, "domain": ""},
+        {"host": "c.com", "ip": "1.1.1.1", "port": 443, "domain": "c.com"},
+    ]
+    ports = fm.assets_to_ports_data(assets)
+    assert len(ports) == 2, ports
+    e1 = next(e for e in ports if e["ip"] == "1.1.1.1")
+    assert [p["port"] for p in e1["ports"]] == [80, 443]
+    assert "www.a.com" in e1["hosts"] and "c.com" in e1["hosts"]
+    # 分页拉取
+    def fake_search(query, page, size):
+        if page == 1:
+            return 3, [["http://a.com", "1.1.1.1", 80, "http", "A", "a.com", "nginx", "2025"],
+                       ["http://b.com", "2.2.2.2", 80, "http", "B", "b.com", "nginx", "2025"]]
+        return 3, [["http://c.com", "3.3.3.3", 443, "https", "C", "c.com", "nginx", "2025"]]
+    c = fm.FofaClient("", "k")
+    c._search_page = fake_search
+    assets2 = c.query_all("test", max_assets=10)
+    assert len(assets2) == 3, assets2
+    print("fofa 单元测试通过")
+
+
 if __name__ == "__main__":
     test_s1_validate()
     test_s1_batch_validate()
+    test_fofa_client()
     test_s2_parse()
     test_risk()
     srv, _ = start_server()          # 服务器贯穿 s4/s5 测试

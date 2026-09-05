@@ -15,21 +15,43 @@ _GNMAP_PORT = re.compile(r"(\d+)/open/tcp//([^/]*)/")
 
 
 def run(ctx, log, progress, should_stop):
-    subs = ctx.data.get("subdomains") or []
-    if not subs:
-        log("无子域数据，跳过。")
-        return {"data": {"dns": {}, "ports": [], "ips": []}}
+    # FOFA 优先：阶段1已产出暴露资产端口，只对 OneForAll 新发现的 IP 补扫
+    fofa_ports = ctx.data.get("fofa_ports") or []
+    fofa_ips = {e["ip"] for e in fofa_ports}
 
-    log(f"解析 {len(subs)} 个子域名…")
-    dns = _resolve_all(subs, progress)
-    ips = sorted({ip for ip in dns.values() if ip}, key=ipaddress.ip_address)
-    log(f"解析成功 {len(ips)} 个 IP（去重后）。")
-    if not ips:
-        return {"data": {"dns": {}, "ports": [], "ips": []}}
+    subs = ctx.data.get("subdomains") or []
+    resolved = {}
+    if subs:
+        log(f"解析 {len(subs)} 个子域名…")
+        resolved = _resolve_all(subs, progress)
+    dns = resolved
+    all_ips = {ip for ip in resolved.values() if ip} | fofa_ips
+    ips = sorted(all_ips, key=ipaddress.ip_address)
+
+    verify = ctx.cfg.get("fofa_verify_scan", False)
+    new_ips = [ip for ip in ips if ip not in fofa_ips]
+    if not verify and fofa_ports and not new_ips:
+        log(f"FOFA 已覆盖全部 {len(fofa_ips)} 个 IP，跳过端口扫描。")
+        progress(1, 1)
+        return {"data": {"dns": dns, "ips": ips, "ports": fofa_ports}}
+
+    if fofa_ports and not verify:
+        log(f"FOFA 已覆盖 {len(fofa_ips)} 个 IP，对 OneForAll 新发现的 "
+            f"{len(new_ips)} 个 IP 补扫 Nmap…")
+        scan_ips = new_ips
+    else:
+        scan_ips = ips
+        if verify and fofa_ports:
+            log("验证扫描已开启：对全部 IP 执行 Nmap 复核（覆盖 FOFA 端口）…")
+    if not scan_ips:
+        log("无可扫描 IP，跳过。")
+        return {"data": {"dns": dns, "ips": ips, "ports": fofa_ports}}
+    ips_sorted_scan = sorted(scan_ips, key=ipaddress.ip_address)
+    log(f"待扫描 {len(ips_sorted_scan)} 个 IP。")
 
     targets_file = os.path.join(ctx.outdir, "nmap_targets.txt")
     with open(targets_file, "w") as f:
-        f.write("\n".join(ips))
+        f.write("\n".join(ips_sorted_scan))
 
     mode = ctx.cfg.get("nmap_mode", "top1000")
     gnmap = os.path.join(ctx.outdir, "nmap_result.gnmap")

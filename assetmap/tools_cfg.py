@@ -36,6 +36,13 @@ DEFAULTS = {
     "headless_render": True,   # Edge/Chrome 无头渲染动态页面
     "render_max": 100,         # 最多渲染的页面数
     "msedge_exe": "",          # 留空自动探测 Edge/Chrome
+    # FOFA 模式
+    "collect_mode": "oneforall",  # oneforall / fofa
+    "fofa_email": "",
+    "fofa_key": "",
+    "fofa_query_type": "org",     # org / title / domain / custom
+    "fofa_max": 2000,             # 最多拉取资产数（控制积分消耗）
+    "fofa_verify_scan": False,    # 对 FOFA 资产再跑 Nmap 复核
 }
 
 # 内置发行包中的相对路径

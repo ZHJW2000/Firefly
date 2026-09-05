@@ -125,29 +125,39 @@ class App:
             .grid(row=0, column=3, sticky="w", pady=3)
         self.txt_targets.bind("<KeyRelease>", lambda e: self._update_tgt_count())
 
-        ttk.Label(frm, text="Nmap 模式:").grid(row=1, column=0, sticky="e", **pad)
+        ttk.Label(frm, text="收集方式:").grid(row=1, column=0, sticky="e", **pad)
         bar1 = ttk.Frame(frm, style="Card.TFrame")
         bar1.grid(row=1, column=1, columnspan=3, sticky="w", **pad)
-        self.cmb_mode = ttk.Combobox(bar1, width=12, state="readonly",
+        self.var_fofa = tk.BooleanVar(value=bool(self.cfg.get("fofa_enabled", True)))
+        tk.Checkbutton(bar1, text="FOFA 优先收集", variable=self.var_fofa, font=FONT,
+                       bg=C_CARD, fg="#2c3e50", activebackground=C_CARD).pack(side="left", padx=(0, 4))
+        ttk.Button(bar1, text="FOFA 设置…", command=self.on_fofa_settings).pack(side="left", padx=8)
+        ttk.Button(bar1, text="导入列表…", command=self.on_import_list).pack(side="left")
+        ttk.Button(frm, text="工具路径设置", command=self.on_paths).grid(row=1, column=4, sticky="e", **pad)
+
+        ttk.Label(frm, text="Nmap 模式:").grid(row=2, column=0, sticky="e", **pad)
+        bar2 = ttk.Frame(frm, style="Card.TFrame")
+        bar2.grid(row=2, column=1, columnspan=3, sticky="w", **pad)
+        self.cmb_mode = ttk.Combobox(bar2, width=12, state="readonly",
                                      values=["top1000", "全端口"])
         self.cmb_mode.current(0)
         self.cmb_mode.pack(side="left")
-        ttk.Button(bar1, text="导入列表…", command=self.on_import_list).pack(side="left", padx=8)
-        ttk.Button(frm, text="工具路径设置", command=self.on_paths).grid(row=1, column=4, sticky="e", **pad)
-
-        ttk.Label(frm, text="输出目录:").grid(row=2, column=0, sticky="e", **pad)
+        self.lbl_nmap_hint = ttk.Label(bar2, style="Gray.TLabel",
+                                       text="FOFA 已覆盖的 IP 默认不重扫")
+        self.lbl_nmap_hint.pack(side="left", padx=10)
+        ttk.Label(frm, text="输出目录:").grid(row=3, column=0, sticky="e", **pad)
         self.ent_out = ttk.Entry(frm, width=62)
         self.ent_out.insert(0, os.path.join(os.getcwd(), "output"))
-        self.ent_out.grid(row=2, column=1, columnspan=3, sticky="w", **pad)
-        ttk.Button(frm, text="浏览…", command=self.on_browse_out).grid(row=2, column=4, sticky="e", **pad)
+        self.ent_out.grid(row=3, column=1, columnspan=3, sticky="w", **pad)
+        ttk.Button(frm, text="浏览…", command=self.on_browse_out).grid(row=3, column=4, sticky="e", **pad)
 
         self.var_auth = tk.BooleanVar(value=False)
         self._native_check(frm, self.var_auth,
-                           "我确认已获得授权，可对上述范围内的资产进行数据安全评估", 3)
+                           "我确认已获得授权，可对上述范围内的资产进行数据安全评估", 4)
 
         self.var_render = tk.BooleanVar(value=bool(self.cfg.get("headless_render", True)))
         self._native_check(frm, self.var_render,
-                           "Edge 无头渲染动态页面（后台执行，捕获运行时注入的 JS）", 4)
+                           "Edge 无头渲染动态页面（后台执行，捕获运行时注入的 JS）", 5)
 
         # 2. 执行
         frm_run = card(self.root, "2. 执行")
@@ -391,6 +401,51 @@ class App:
         ttk.Button(dlg, text="保存", style="Primary.TButton",
                    command=do_save).grid(row=len(keys), column=2, sticky="e", pady=6)
 
+    def on_fofa_settings(self):
+        dlg = tk.Toplevel(self.root)
+        dlg.title("FOFA 设置")
+        dlg.configure(bg=C_CARD)
+        ttk.Label(dlg, text="启用 FOFA 优先收集后，输入资产名称走 org=/title= 查询，"
+                            "输入域名走 domain= 查询。", style="Gray.TLabel", wraplength=520,
+                  justify="left").grid(row=0, column=0, columnspan=3, sticky="w", padx=8, pady=4)
+        entries = {}
+        keys = [("fofa_email", "FOFA Email", False),
+                ("fofa_key", "FOFA API Key", False),
+                ("fofa_query_type", "名称查询字段(org/title)", False),
+                ("fofa_max", "最大拉取资产数", False)]
+        for i, (k, label, is_dir) in enumerate(keys, start=1):
+            ttk.Label(dlg, text=label, width=24).grid(row=i, column=0, sticky="w", padx=6, pady=3)
+            e = ttk.Entry(dlg, width=52, show="*" if k == "fofa_key" else "")
+            e.insert(0, str(self.cfg.get(k, "")))
+            e.grid(row=i, column=1, padx=6, pady=3)
+            entries[k] = e
+        self.var_verify = tk.BooleanVar(value=bool(self.cfg.get("fofa_verify_scan", False)))
+        ttk.Checkbutton(dlg, text="对 FOFA 资产 IP 再执行 Nmap 验证扫描（更准但更慢）",
+                        variable=self.var_verify).grid(row=5, column=0, columnspan=3, sticky="w", padx=6)
+
+        def do_test():
+            try:
+                from .fofa import FofaClient
+                info = FofaClient(entries["fofa_email"].get().strip(),
+                                  entries["fofa_key"].get().strip()).account_info()
+                messagebox.showinfo("FOFA 连接成功",
+                                    "账号: {}\n会员等级: {}\n剩余积分: {}\n免费点数: {}".format(
+                                        info.get("email", "?"), info.get("vip_level", "?"),
+                                        info.get("fofa_point", "?"), info.get("remain_free_point", "?")))
+            except Exception as e:
+                messagebox.showerror("FOFA 连接失败", str(e))
+
+        def do_save():
+            for k, e in entries.items():
+                self.cfg[k] = e.get().strip()
+            self.cfg["fofa_verify_scan"] = bool(self.var_verify.get())
+            self.cfg["fofa_enabled"] = bool(self.var_fofa.get())
+            save(self.cfg)
+            dlg.destroy()
+        ttk.Button(dlg, text="测试连接", command=do_test).grid(row=6, column=1, sticky="w", pady=6)
+        ttk.Button(dlg, text="保存", style="Primary.TButton",
+                   command=do_save).grid(row=6, column=2, sticky="e", pady=6, padx=6)
+
     def _report_tools(self):
         checks = check_tools(self.cfg)
         missing = [s for s, (ok, _) in checks.items() if not ok and s != "1-子域"]
@@ -424,6 +479,7 @@ class App:
             return
         self.cfg["nmap_mode"] = "full" if self.cmb_mode.current() == 1 else "top1000"
         self.cfg["headless_render"] = bool(self.var_render.get())
+        self.cfg["fofa_enabled"] = bool(self.var_fofa.get())
         save(self.cfg)
         outdir = default_outdir(self.ent_out.get().strip() or os.path.join(os.getcwd(), "output"),
                                 targets[0] if len(targets) == 1 else f"batch_{len(targets)}目标")
