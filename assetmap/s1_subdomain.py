@@ -148,7 +148,7 @@ def _collect_oneforall(ctx, domains, log, progress, should_stop):
 
     subs = _validate(subs, domains, log, manual=bool(manual))
     log(f"有效子域 {len(subs)} 个。")
-    return {"data": {"subdomains": subs}}
+    return subs
 
 
 def _parse_oneforall_csv(path, log):
