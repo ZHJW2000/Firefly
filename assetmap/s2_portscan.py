@@ -47,7 +47,8 @@ def run(ctx, log, progress, should_stop):
     out_f = open(gnmap + ".console", "w", encoding="utf-8", errors="replace")
     try:
         proc = subprocess.Popen(cmd, stdout=out_f, stderr=subprocess.STDOUT,
-                                stdin=subprocess.DEVNULL)
+                                stdin=subprocess.DEVNULL,
+                                creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0))
         try:
             proc.wait(timeout=timeout)
             if proc.returncode != 0:

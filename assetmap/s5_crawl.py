@@ -43,7 +43,8 @@ def run(ctx, log, progress, should_stop):
         log(f"运行 Katana（深度 {depth}）…")
         try:
             proc = subprocess.run(cmd, capture_output=True, text=True, timeout=3600,
-                                  encoding="utf-8", errors="replace")
+                                  encoding="utf-8", errors="replace",
+                                  creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0))
             if proc.returncode != 0:
                 log(f"Katana 退出码 {proc.returncode}: {(proc.stderr or '')[-300:]}")
         except subprocess.TimeoutExpired:

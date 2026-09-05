@@ -1,0 +1,213 @@
+    0.0s | 目标: kingsunedu.com，输出目录: D:\AIStorage\Zcode\SecurityTools\asset-mapper\output\audit
+    0.0s | [阶段1] 1-子域收集 开始…
+    0.0s | [阶段1] 调用 OneForAll（被动收集，未开启爆破），过程日志实时输出…
+    0.9s | [阶段1]   06:20:38,367 [INFOR] utils:523 - Checking dependent environment
+    0.9s | [阶段1]   06:20:38,368 [INFOR] utils:535 - Checking network environment
+    1.6s | [阶段1]   06:20:39,116 [INFOR] utils:546 - Checking for the latest version
+    2.4s | [阶段1]   06:20:39,916 [INFOR] utils:570 - The current version v0.4.5 is already the latest version
+    2.4s | [阶段1]   06:20:39,917 [INFOR] oneforall:303 - Start running OneForAll
+    2.4s | [阶段1]   06:20:39,918 [INFOR] oneforall:308 - Got 1 domains
+    2.4s | [阶段1]   06:20:39,960 [INFOR] wildcard:108 - Detecting kingsunedu.com use wildcard dns record or not
+    2.8s | [阶段1]   06:20:40,273 [ALERT] wildcard:123 - The domain kingsunedu.com disables wildcard
+    2.8s | [阶段1]   06:20:40,273 [INFOR] collect:44 - Start collecting subdomains of kingsunedu.com
+    2.9s | [阶段1]   06:20:40,418 [INFOR] module:63 - QueryMX module took 0.0 seconds found 0 subdomains
+    3.0s | [阶段1]   06:20:40,463 [INFOR] module:63 - NSECCheck module took 0.1 seconds found 0 subdomains
+    3.0s | [阶段1]   NewConnectionError('<urllib3.connection.HTTPSConnection object at 0x000002B0887E80D0>: Failed to establish a new connection: [Errno 
+    3.0s | [阶段1]   06:20:40,468 [INFOR] module:63 - CeBaiduQuery module took 0.1 seconds found 0 subdomains
+    3.0s | [阶段1]   06:20:40,469 [INFOR] module:63 - AXFRCheck module took 0.1 seconds found 0 subdomains
+    3.0s | [阶段1]   06:20:40,477 [INFOR] module:63 - QueryNS module took 0.1 seconds found 0 subdomains
+    3.0s | [阶段1]   06:20:40,480 [INFOR] module:63 - QuerySPF module took 0.1 seconds found 0 subdomains
+    3.0s | [阶段1]   06:20:40,480 [INFOR] module:63 - QuerySOA module took 0.1 seconds found 0 subdomains
+    3.0s | [阶段1]   06:20:40,483 [INFOR] module:63 - QueryTXT module took 0.1 seconds found 0 subdomains
+    3.3s | [阶段1]   06:20:40,816 [INFOR] module:63 - IP138Query module took 0.4 seconds found 7 subdomains
+    3.7s | [阶段1]   06:20:41,166 [ALERT] utils:273 - GET https://fullhunt.io/api/v1/domain/kingsunedu.com/subdomains 429 - Too Many Requests 87
+    3.7s | [阶段1]   06:20:41,166 [ALERT] utils:282 - {'error': 'Rate Limit Exceeded', 'message': 'Too many requests. Please try again later.'}
+    3.7s | [阶段1]   06:20:41,180 [INFOR] module:63 - FullHuntAPIQuery module took 0.8 seconds found 0 subdomains
+    3.7s | [阶段1]   06:20:41,200 [INFOR] module:63 - CertSpotterQuery module took 0.8 seconds found 1 subdomains
+    3.9s | [阶段1]   06:20:41,399 [INFOR] module:63 - SogouSearch module took 1.0 seconds found 1 subdomains
+    4.1s | [阶段1]   06:20:41,651 [ALERT] utils:273 - POST https://dnsdumpster.com/ 403 - Forbidden 5880
+    4.2s | [阶段1]   06:20:41,694 [INFOR] module:63 - DNSDumpsterQuery module took 1.3 seconds found 0 subdomains
+    4.2s | [阶段1]   06:20:41,757 [INFOR] module:63 - CertInfo module took 1.4 seconds found 0 subdomains
+    4.4s | [阶段1]   06:20:41,895 [ALERT] utils:273 - GET https://jonlu.ca/anubis/subdomains/kingsunedu.com 403 - Forbidden 4568
+    4.4s | [阶段1]   06:20:41,919 [INFOR] module:63 - AnubisQuery module took 1.5 seconds found 0 subdomains
+    4.5s | [阶段1]   06:20:42,013 [ALERT] utils:273 - GET https://otx.alienvault.com/api/v1/indicators/domain/kingsunedu.com/passive_dns 429 - Too Many R
+    4.5s | [阶段1]   06:20:42,015 [ALERT] utils:282 - {'detail': 'Anonymous access to this endpoint is limited. Please authenticate.'}
+    4.7s | [阶段1]   06:20:42,196 [INFOR] module:63 - GiteeSearch module took 1.8 seconds found 0 subdomains
+    4.8s | [阶段1]   06:20:42,283 [INFOR] module:63 - BaiduSearch module took 1.9 seconds found 0 subdomains
+    4.9s | [阶段1]   06:20:42,442 [INFOR] module:63 - CSPCheck module took 2.1 seconds found 0 subdomains
+    5.1s | [阶段1]   06:20:42,581 [INFOR] module:63 - CrossDomainCheck module took 2.2 seconds found 0 subdomains
+    5.1s | [阶段1]   06:20:42,582 [INFOR] module:63 - RobotsCheck module took 2.2 seconds found 0 subdomains
+    5.2s | [阶段1]   06:20:42,663 [INFOR] module:63 - NetCraftQuery module took 2.3 seconds found 0 subdomains
+    5.2s | [阶段1]   06:20:42,680 [INFOR] module:63 - RapidDNSQuery module took 2.3 seconds found 4 subdomains
+    5.5s | [阶段1]   06:20:42,967 [ALERT] utils:273 - GET https://otx.alienvault.com/api/v1/indicators/domain/kingsunedu.com/url_list 429 - Too Many Requ
+    5.5s | [阶段1]   06:20:42,968 [ALERT] utils:282 - {'detail': 'Over throttling limit (100/hour)'}
+    5.5s | [阶段1]   06:20:42,979 [INFOR] module:63 - AlienVaultQuery module took 2.6 seconds found 0 subdomains
+    5.5s | [阶段1]   06:20:43,010 [INFOR] module:63 - BingSearch module took 2.6 seconds found 0 subdomains
+    6.0s | [阶段1]   06:20:43,541 [INFOR] module:63 - CrtshQuery module took 3.2 seconds found 2 subdomains
+    6.9s | [阶段1]   06:20:44,375 [INFOR] module:63 - SoSearch module took 4.0 seconds found 9 subdomains
+    7.8s | [阶段1]   06:20:45,271 [INFOR] module:63 - RobtexQuery module took 4.9 seconds found 1 subdomains
+    8.7s | [阶段1]   06:20:46,220 [INFOR] module:63 - SitemapCheck module took 5.8 seconds found 0 subdomains
+   10.0s | [阶段1]   06:20:47,525 [INFOR] module:63 - HackerTargetQuery module took 7.1 seconds found 6 subdomains
+   10.1s | [阶段1]   NewConnectionError('<urllib3.connection.HTTPSConnection object at 0x000002B088820890>: Failed to establish a new connection: [Errno 
+   10.1s | [阶段1]   06:20:47,653 [INFOR] module:63 - RiddlerQuery module took 7.3 seconds found 0 subdomains
+   11.1s | [阶段1]   06:20:48,563 [INFOR] module:63 - Sublist3rQuery module took 8.2 seconds found 1 subdomains
+   12.4s | [阶段1]   06:20:49,889 [INFOR] module:63 - YandexSearch module took 9.5 seconds found 0 subdomains
+   13.1s | [阶段1]   06:20:50,652 [ALERT] utils:273 - GET https://www.virustotal.com/ui/domains/kingsunedu.com/subdomains?limit=40&cursor= 429 - Too Many
+   13.1s | [阶段1]   06:20:50,653 [ALERT] utils:282 - {'error': {'code': 'RecaptchaRequiredError', 'message': 'reCAPTCHA validation failed, please try ag
+   13.2s | [阶段1]   06:20:50,665 [INFOR] module:63 - VirusTotalQuery module took 10.3 seconds found 0 subdomains
+   16.8s | [阶段1]   d by ConnectTimeoutError(<urllib3.connection.HTTPConnection object at 0x000002B088825150>, 'Connection to www.sitedossier.com timed 
+   16.8s | [阶段1]   06:20:54,337 [INFOR] module:63 - SiteDossierQuery module took 13.9 seconds found 0 subdomains
+   17.1s | [阶段1]   aused by ConnectTimeoutError(<urllib3.connection.HTTPSConnection object at 0x000002B088B85750>, 'Connection to www.google.com timed 
+   17.1s | [阶段1]   06:20:54,655 [INFOR] module:63 - GoogleSearch module took 14.2 seconds found 0 subdomains
+   21.5s | [阶段1]   aused by ConnectTimeoutError(<urllib3.connection.HTTPSConnection object at 0x000002B0888079D0>, 'Connection to www.dnsscan.cn timed 
+   21.5s | [阶段1]   06:20:59,036 [INFOR] module:63 - QianXunQuery module took 18.6 seconds found 0 subdomains
+   23.5s | [阶段1]   06:21:00,972 [ALERT] utils:273 - GET https://api.threatminer.org/v2/domain.php?q=kingsunedu.com&rt=5 522 - <none> 7289
+   23.5s | [阶段1]   06:21:00,989 [INFOR] module:63 - ThreatMinerQuery module took 20.6 seconds found 0 subdomains
+   24.9s | [阶段1]   06:21:02,456 [INFOR] module:63 - ChinazQuery module took 22.1 seconds found 1 subdomains
+   30.0s | [阶段1]   d by ConnectTimeoutError(<urllib3.connection.HTTPSConnection object at 0x000002B088BC44D0>, 'Connection to www.search.ask.com timed 
+   30.0s | [阶段1]   06:21:07,540 [INFOR] module:63 - AskSearch module took 27.1 seconds found 0 subdomains
+   30.2s | [阶段1]   sed by ConnectTimeoutError(<urllib3.connection.HTTPSConnection object at 0x000002B088B90FD0>, 'Connection to search.yahoo.com timed 
+   30.2s | [阶段1]   06:21:07,731 [INFOR] module:63 - YahooSearch module took 27.3 seconds found 0 subdomains
+   81.0s | [阶段1]   tTimeoutError(<urllib3.connection.HTTPSConnection object at 0x000002B0887AB650>, 'Connection to transparencyreport.google.com timed 
+   81.0s | [阶段1]   06:21:58,529 [INFOR] module:63 - GoogleQuery module took 78.2 seconds found 0 subdomains
+   86.5s | [阶段1]   06:22:03,966 [INFOR] module:63 - BruteSRV module took 5.4 seconds found 0 subdomains
+   86.5s | [阶段1]   06:22:03,981 [INFOR] brute:467 - Start running Brute module
+   86.5s | [阶段1]   06:22:03,983 [INFOR] brute:417 - Blasting kingsunedu.com
+   86.5s | [阶段1]   06:22:03,983 [INFOR] brute:119 - Querying NS records of kingsunedu.com
+   86.5s | [阶段1]   06:22:04,018 [INFOR] brute:129 - kingsunedu.com's authoritative name server is ['vip3.alidns.com.', 'vip4.alidns.com.']
+   86.5s | [阶段1]   06:22:04,019 [INFOR] brute:99 - Querying A record from authoritative name server: ['vip3.alidns.com.', 'vip4.alidns.com.']
+   86.6s | [阶段1]   116.84.178', '39.103.26.212', '47.108.36.163', '140.205.1.5', '47.108.36.164', '140.205.1.6', '121.40.6.164', '8.129.152.246', '47.1
+   86.6s | [阶段1]   06:22:04,085 [INFOR] brute:354 - Generating dictionary for kingsunedu.com
+   86.6s | [阶段1]   06:22:04,137 [ALERT] utils:686 - Please check whether eu4.kingsunedu.com is correct or not
+   86.6s | [阶段1]   06:22:04,139 [INFOR] brute:372 - Dictionary size: 95247
+   86.7s | [阶段1]   06:22:04,166 [INFOR] brute:448 - Running massdns to brute subdomains
+  122.8s | [阶段1]   06:22:40,306 [INFOR] brute:197 - Counting IP cname appear times
+  122.8s | [阶段1]   06:22:40,307 [INFOR] brute:238 - Processing result
+  122.8s | [阶段1]   06:22:40,309 [ALERT] brute:458 - Brute module takes 36.3 seconds, found 15 subdomains of kingsunedu.com
+  122.8s | [阶段1]   06:22:40,315 [INFOR] brute:498 - Finished Brute module to brute kingsunedu.com
+  122.8s | [阶段1]   06:22:40,327 [INFOR] resolve:143 - Start resolving subdomains of kingsunedu.com
+  122.8s | [阶段1]   06:22:40,344 [INFOR] resolve:166 - Running massdns to resolve subdomains
+  124.4s | [阶段1]   06:22:41,898 [INFOR] resolve:104 - Processing resolved results
+  124.4s | [阶段1]   06:22:41,900 [INFOR] resolve:172 - Finished resolve subdomains of kingsunedu.com
+  124.4s | [阶段1]   06:22:41,900 [INFOR] resolve:61 - Saving resolved results
+  124.4s | [阶段1]   06:22:41,916 [INFOR] request:258 - Start requesting subdomains of kingsunedu.com
+  124.4s | [阶段1]   06:22:41,916 [INFOR] request:39 - Port range:[80, 443]
+  124.4s | [阶段1]   06:22:41,918 [INFOR] request:56 - Generating request urls
+  124.4s | [阶段1]   06:22:41,918 [INFOR] request:217 - Requesting urls in bulk
+  124.5s | [阶段1]   OneForAll 运行中… 124s
+  138.8s | [阶段1]   06:22:56,351 [INFOR] request:264 - Found that kingsunedu.com has 30 alive subdomains
+  138.8s | [阶段1]   06:22:56,352 [INFOR] finder:23 - Start Finder module
+  138.8s | [阶段1]   06:22:56,361 [INFOR] request:217 - Requesting urls in bulk
+  139.4s | [阶段1]   06:22:56,932 [INFOR] module:63 - Finder module took 0.6 seconds found 0 subdomains
+  139.4s | [阶段1]   06:22:56,932 [INFOR] module:63 - Finder module took 0.6 seconds found 0 subdomains
+  139.4s | [阶段1]   06:22:56,933 [INFOR] resolve:143 - Start resolving subdomains of kingsunedu.com
+  139.4s | [阶段1]   06:22:56,933 [INFOR] request:258 - Start requesting subdomains of kingsunedu.com
+  139.4s | [阶段1]   06:22:56,934 [INFOR] request:39 - Port range:[80, 443]
+  139.4s | [阶段1]   06:22:56,934 [INFOR] request:56 - Generating request urls
+  139.4s | [阶段1]   0it [00:00, ?it/s]06:22:56,934 [INFOR] request:217 - Requesting urls in bulk
+  139.4s | [阶段1]   06:22:56,938 [INFOR] request:264 - Found that kingsunedu.com has 30 alive subdomains
+  139.4s | [阶段1]   06:22:56,938 [INFOR] altdns:203 - Start altdns module
+  139.5s | [阶段1]   06:22:56,979 [INFOR] altdns:210 - The altdns module generated 4 new subdomains
+  139.5s | [阶段1]   06:22:56,980 [INFOR] resolve:143 - Start resolving subdomains of kingsunedu.com
+  139.5s | [阶段1]   06:22:57,000 [INFOR] resolve:166 - Running massdns to resolve subdomains
+  140.0s | [阶段1]   06:22:57,533 [INFOR] resolve:104 - Processing resolved results
+  140.0s | [阶段1]   06:22:57,534 [ALERT] resolve:36 - No valid resolved result
+  140.0s | [阶段1]   06:22:57,534 [INFOR] resolve:172 - Finished resolve subdomains of kingsunedu.com
+  140.0s | [阶段1]   06:22:57,534 [INFOR] request:258 - Start requesting subdomains of kingsunedu.com
+  140.0s | [阶段1]   06:22:57,534 [INFOR] request:39 - Port range:[80, 443]
+  140.0s | [阶段1]   06:22:57,534 [INFOR] request:56 - Generating request urls
+  140.0s | [阶段1]   06:22:57,534 [INFOR] request:217 - Requesting urls in bulk
+  140.0s | [阶段1]   06:22:57,539 [INFOR] request:264 - Found that kingsunedu.com has 30 alive subdomains
+  140.2s | [阶段1]   06:22:57,694 [INFOR] webfinger:118 - Start web fingerprint identifying subdomains of kingsunedu.com
+  140.2s | [阶段1]   06:22:57,721 [INFOR] webfinger:125 - Identified fingerprints for 7 alive subdomains of kingsunedu.com
+  140.2s | [阶段1]   06:22:57,721 [INFOR] priority:210 - Start calculating pentest priority of kingsunedu.com
+  140.3s | [阶段1]   06:22:57,807 [INFOR] priority:220 - Calculated pentest priority for 30 alive subdomains of kingsunedu.com
+  140.3s | [阶段1]   06:22:57,808 [INFOR] priority:233 - Top pentest priority subdomains of kingsunedu.com:
+  140.3s | [阶段1]   06:22:57,808 [ALERT] priority:235 - [P2-低] score=32 https://mod.kingsunedu.com | 403 Forbidden | None
+  140.3s | [阶段1]   not belong to you.\n6A9B44B176527933343B53E0\nfzddb.oss-cn-shenzhen.aliyuncs.com\n0003-00000905\nhttps://api.aliyun.com/troubleshoot
+  140.3s | [阶段1]   not belong to you.\n6A9B44B281A4C230324079E7\nfzddb.oss-cn-shenzhen.aliyuncs.com\n0003-00000905\nhttps://api.aliyun.com/troubleshoot
+  140.3s | [阶段1]   06:22:57,809 [ALERT] priority:235 - [P2-低] score=32 http://res1.kingsunedu.com | None | OpenResty
+  140.3s | [阶段1]   06:22:57,809 [ALERT] priority:235 - [P2-低] score=32 http://mod.kingsunedu.com | 403 Forbidden | None
+  140.3s | [阶段1]   06:22:57,809 [ALERT] priority:235 - [P2-低] score=30 http://js.kingsunedu.com | 极速自动发货 | jQuery,Bootstrap
+  140.3s | [阶段1]   06:22:57,809 [ALERT] priority:235 - [P2-低] score=30 https://js.kingsunedu.com | 极速自动发货 | jQuery,Bootstrap
+  140.3s | [阶段1]   06:22:57,809 [ALERT] priority:235 - [P2-低] score=28 http://admin.kingsunedu.com | Not Found | None
+  140.3s | [阶段1]   06:22:57,810 [ALERT] priority:235 - [P2-低] score=28 https://admin.kingsunedu.com | Not Found | None
+  140.3s | [阶段1]   06:22:57,810 [ALERT] priority:235 - [P2-低] score=28 https://ddb.kingsunedu.com | 跟读大冲关 | jQuery,Alist
+  140.3s | [阶段1]   elong to you.\n6A9B44B1EE1CC03132236443\nfzresource.oss-cn-shenzhen.aliyuncs.com\n0003-00000905\nhttps://api.aliyun.com/troubleshoot
+  140.3s | [阶段1]   elong to you.\n6A9B44B2D326A13433F9206B\nfzresource.oss-cn-shenzhen.aliyuncs.com\n0003-00000905\nhttps://api.aliyun.com/troubleshoot
+  140.3s | [阶段1]   06:22:57,810 [ALERT] priority:235 - [P2-低] score=24 http://ddb.kingsunedu.com | 教师资源下载 | jQuery
+  140.3s | [阶段1]   06:22:57,811 [ALERT] priority:235 - [P2-低] score=20 http://kingsunedu.com | Not Found | None
+  140.3s | [阶段1]   06:22:57,811 [ALERT] priority:235 - [P2-低] score=20 https://kingsunedu.com | Not Found | None
+  140.3s | [阶段1]   06:22:57,811 [ALERT] priority:235 - [P2-低] score=20 http://yjxuums.kingsunedu.com | Not Found | None
+  140.3s | [阶段1]   06:22:57,811 [ALERT] priority:235 - [P2-低] score=20 https://yjxuums.kingsunedu.com | Not Found | None
+  140.3s | [阶段1]   06:22:57,812 [ALERT] priority:235 - [P3-很低] score=18 http://fzntcdn.kingsunedu.com | 403 Forbidden | None
+  140.3s | [阶段1]   06:22:57,812 [ALERT] priority:235 - [P3-很低] score=18 https://fzntcdn.kingsunedu.com | 403 Forbidden | None
+  140.3s | [阶段1]   06:22:57,812 [ALERT] priority:235 - [P3-很低] score=18 http://imgcdn.kingsunedu.com | 403 Forbidden | None
+  140.3s | [阶段1]   06:22:57,812 [ALERT] priority:235 - [P3-很低] score=18 https://imgcdn.kingsunedu.com | 403 Forbidden | None
+  140.3s | [阶段1]   06:22:57,812 [ALERT] priority:235 - [P3-很低] score=18 http://teacher.kingsunedu.com | 403 Forbidden | None
+  140.3s | [阶段1]   06:22:57,812 [ALERT] priority:235 - [P3-很低] score=18 https://teacher.kingsunedu.com | 403 Forbidden | None
+  140.3s | [阶段1]   06:22:57,813 [ALERT] priority:235 - [P3-很低] score=16 https://www.kingsunedu.com | 方直金太阳 | jQuery
+  140.3s | [阶段1]   06:22:57,813 [ALERT] priority:235 - [P3-很低] score=16 http://www.kingsunedu.com | 方直金太阳 | jQuery
+  140.3s | [阶段1]   06:22:57,813 [ALERT] priority:235 - [P3-很低] score=16 https://szteacher.kingsunedu.com | 深小英教学资源平台 | None
+  140.3s | [阶段1]   06:22:57,813 [ALERT] priority:235 - [P3-很低] score=6 https://markdown.kingsunedu.com |  | None
+  140.3s | [阶段1]   06:22:57,814 [ALERT] priority:235 - [P3-很低] score=6 https://res1.kingsunedu.com |  | None
+  140.3s | [阶段1]   06:22:57,814 [ALERT] priority:235 - [P3-很低] score=6 https://trp.kingsunedu.com |  | None
+  140.3s | [阶段1]   06:22:57,814 [ALERT] priority:235 - [P3-很低] score=6 https://open.kingsunedu.com |  | None
+  140.3s | [阶段1]   6:22:57,817 [ALERT] export:64 - The subdomain result for kingsunedu.com: D:\AIStorage\Zcode\SecurityTools\asset-mapper\output\audit\
+  140.3s | [阶段1]   06:22:57,818 [INFOR] oneforall:319 - Finished OneForAll
+  140.4s | [阶段1] OneForAll 退出码 0。
+  140.4s | [阶段1] 有效子域 21 个。
+  140.4s | [阶段1] 1-子域收集 完成，耗时 140s。
+  140.4s | [阶段2] 2-端口扫描 开始…
+  140.4s | [阶段2] 解析 21 个子域名…
+  140.4s |     进度2: 20/21
+  140.4s |     进度2: 21/21
+  140.4s | [阶段2] 解析成功 16 个 IP（去重后）。
+  140.4s | [阶段2] top1000 模式。
+  140.4s | [阶段2] 运行 Nmap…
+  655.2s | [阶段2] 扫描完成：16 个 IP，共 86 个开放端口。
+  655.2s | [阶段2] 2-端口扫描 完成，耗时 515s。
+  655.2s | [阶段3] 3-指纹识别 开始…
+  655.2s | [阶段3] 构造候选 URL 147 个，先做存活预筛…
+  666.0s | [阶段3] 存活 13 个，送 EHole 指纹识别。
+  666.0s | [阶段3] 运行 EHole…
+  666.5s | [阶段3] EHole 退出码 1: 28:8002 | [38;2;237;64;35mYii PHP Framework (Default Favicon),Yii框架,My Yii,Bootstrap,MyYii,rails-framework[0m | nginx |
+  666.5s | [阶段3] EHole 识别出指纹 13 条。
+  666.5s | [阶段3] 3-指纹识别 完成，耗时 11s。
+  666.5s | [阶段4] 4-Web探测 开始…
+  666.5s | [阶段4] 探测 13 个 URL（并发 100）…
+  666.6s |     进度4: 13/13
+  666.6s | [阶段4] 存活 13 / 13。
+  666.6s | [阶段4] 4-Web探测 完成，耗时 0s。
+  666.6s | [阶段5] 5-端点爬取 开始…
+  666.6s | [阶段5] 运行 Katana（深度 2）…
+  693.8s | [阶段5] 提取端点 45 个。
+  693.8s | [阶段5] 发现 JS 文件 18 个，扫描硬编码敏感数据…
+  693.9s | [阶段5] 无头渲染 13 个页面（并发 3，超时 15s）…
+  697.2s |     进度5: 1/13
+  699.4s |     进度5: 2/13
+  699.7s | [阶段5] 渲染 http://120.76.199.228 失败: Error
+  699.7s |     进度5: 3/13
+  702.1s |     进度5: 4/13
+  704.3s |     进度5: 5/13
+  707.0s |     进度5: 6/13
+  709.3s |     进度5: 7/13
+  711.9s |     进度5: 8/13
+  714.2s |     进度5: 9/13
+  716.5s |     进度5: 10/13
+  719.6s |     进度5: 11/13
+  726.9s |     进度5: 12/13
+  729.1s |     进度5: 13/13
+  729.5s | [阶段5] 渲染完成：12 页成功，动态发现 JS 16 个。
+  729.7s |     进度5: 10/22
+  729.9s |     进度5: 20/22
+  730.0s |     进度5: 22/22
+  730.0s | [阶段5] 敏感数据命中 2 条。
+  730.0s | [阶段5] 5-端点爬取 完成，耗时 63s。
+  730.0s | [阶段6] 6-汇总报表 开始…
+  730.0s | [阶段6] 共 86 个服务，最高风险 10 分。
+  730.0s | [阶段6] Excel 报表生成完成。
+  730.0s | [阶段6] 6-汇总报表 完成，耗时 0s。
+  730.0s | 报表已生成: D:\AIStorage\Zcode\SecurityTools\asset-mapper\output\audit\资产测绘报告_kingsunedu.com.xlsx
+>>> 已结束
+报表: D:\AIStorage\Zcode\SecurityTools\asset-mapper\output\audit\资产测绘报告_kingsunedu.com.xlsx

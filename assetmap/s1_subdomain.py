@@ -48,6 +48,7 @@ def run(ctx, log, progress, should_stop):
             # 实时流式读取：OneForAll 运行数分钟，静默等待会让界面看起来像卡死
             proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
                                     text=True, encoding="utf-8", errors="replace",
+                                    creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0),
                                     cwd=os.path.dirname(ctx.cfg["oneforall_py"]))
             t0 = time.time()
             heartbeat = t0

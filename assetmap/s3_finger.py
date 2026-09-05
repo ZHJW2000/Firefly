@@ -57,7 +57,8 @@ def run(ctx, log, progress, should_stop):
         log("运行 EHole…")
         try:
             proc = subprocess.run(cmd, cwd=cwd, capture_output=True, text=True,
-                                  timeout=1800, encoding="utf-8", errors="replace")
+                                  timeout=1800, encoding="utf-8", errors="replace",
+                                  creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0))
             if proc.returncode != 0:
                 log(f"EHole 退出码 {proc.returncode}: {(proc.stderr or proc.stdout or '')[-300:]}")
         except subprocess.TimeoutExpired:
